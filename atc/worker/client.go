@@ -1,6 +1,8 @@
 package worker
 
 import (
+	"errors"
+
 	"code.cloudfoundry.org/lager"
 	"github.com/concourse/concourse/atc/db"
 )
@@ -9,6 +11,7 @@ import (
 
 type Client interface {
 	FindContainer(logger lager.Logger, teamID int, handle string) (Container, bool, error)
+	CreateContainer(logger lager.Logger, teamID int, spec ContainerSpec, workerSpec WorkerSpec) (Container, error)
 	FindVolume(logger lager.Logger, teamID int, handle string) (Volume, bool, error)
 	CreateVolume(logger lager.Logger, vSpec VolumeSpec, wSpec WorkerSpec, volumeType db.VolumeType) (Volume, error)
 }
@@ -23,6 +26,15 @@ func NewClient(pool Pool, provider WorkerProvider) *client {
 type client struct {
 	pool     Pool
 	provider WorkerProvider
+}
+
+func (client *client) CreateContainer(logger lager.Logger, teamID int, spec ContainerSpec, workerSpec WorkerSpec) (Container, error) {
+	_, err := client.pool.FindOrChooseWorker(logger, workerSpec)
+	if err != nil {
+		return nil, err
+	}
+
+	return nil, errors.New("nope")
 }
 
 func (client *client) FindContainer(logger lager.Logger, teamID int, handle string) (Container, bool, error) {
