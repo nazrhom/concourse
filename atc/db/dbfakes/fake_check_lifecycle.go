@@ -2,15 +2,17 @@
 package dbfakes
 
 import (
-	"sync"
+	sync "sync"
+	time "time"
 
-	"github.com/concourse/concourse/atc/db"
+	db "github.com/concourse/concourse/atc/db"
 )
 
 type FakeCheckLifecycle struct {
-	RemoveExpiredChecksStub        func() error
+	RemoveExpiredChecksStub        func(time.Duration) error
 	removeExpiredChecksMutex       sync.RWMutex
 	removeExpiredChecksArgsForCall []struct {
+		arg1 time.Duration
 	}
 	removeExpiredChecksReturns struct {
 		result1 error
@@ -22,15 +24,16 @@ type FakeCheckLifecycle struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeCheckLifecycle) RemoveExpiredChecks() error {
+func (fake *FakeCheckLifecycle) RemoveExpiredChecks(arg1 time.Duration) error {
 	fake.removeExpiredChecksMutex.Lock()
 	ret, specificReturn := fake.removeExpiredChecksReturnsOnCall[len(fake.removeExpiredChecksArgsForCall)]
 	fake.removeExpiredChecksArgsForCall = append(fake.removeExpiredChecksArgsForCall, struct {
-	}{})
-	fake.recordInvocation("RemoveExpiredChecks", []interface{}{})
+		arg1 time.Duration
+	}{arg1})
+	fake.recordInvocation("RemoveExpiredChecks", []interface{}{arg1})
 	fake.removeExpiredChecksMutex.Unlock()
 	if fake.RemoveExpiredChecksStub != nil {
-		return fake.RemoveExpiredChecksStub()
+		return fake.RemoveExpiredChecksStub(arg1)
 	}
 	if specificReturn {
 		return ret.result1
@@ -45,10 +48,17 @@ func (fake *FakeCheckLifecycle) RemoveExpiredChecksCallCount() int {
 	return len(fake.removeExpiredChecksArgsForCall)
 }
 
-func (fake *FakeCheckLifecycle) RemoveExpiredChecksCalls(stub func() error) {
+func (fake *FakeCheckLifecycle) RemoveExpiredChecksCalls(stub func(time.Duration) error) {
 	fake.removeExpiredChecksMutex.Lock()
 	defer fake.removeExpiredChecksMutex.Unlock()
 	fake.RemoveExpiredChecksStub = stub
+}
+
+func (fake *FakeCheckLifecycle) RemoveExpiredChecksArgsForCall(i int) time.Duration {
+	fake.removeExpiredChecksMutex.RLock()
+	defer fake.removeExpiredChecksMutex.RUnlock()
+	argsForCall := fake.removeExpiredChecksArgsForCall[i]
+	return argsForCall.arg1
 }
 
 func (fake *FakeCheckLifecycle) RemoveExpiredChecksReturns(result1 error) {

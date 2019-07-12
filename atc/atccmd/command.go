@@ -150,6 +150,7 @@ type RunCommand struct {
 
 		OneOffBuildGracePeriod time.Duration `long:"one-off-grace-period" default:"5m" description:"Period after which one-off build containers will be garbage-collected."`
 		MissingGracePeriod     time.Duration `long:"missing-grace-period" default:"5m" description:"Period after which to reap containers and volumes that were created but went missing from the worker."`
+		CheckRecyclePeriod     time.Duration `long:"check-recycle-period" default:"168h" description:"Period after which to reap checks that are completed."`
 	} `group:"Garbage Collection" namespace:"gc"`
 
 	BuildTrackerInterval time.Duration `long:"build-tracker-interval" default:"10s" description:"Interval on which to run build tracking."`
@@ -772,6 +773,7 @@ func (cmd *RunCommand) constructBackendMembers(
 	dbResourceCacheLifecycle := db.NewResourceCacheLifecycle(dbConn)
 	dbContainerRepository := db.NewContainerRepository(dbConn)
 	dbArtifactLifecycle := db.NewArtifactLifecycle(dbConn)
+	dbCheckLifecycle := db.NewCheckLifecycle(dbConn)
 	resourceConfigCheckSessionLifecycle := db.NewResourceConfigCheckSessionLifecycle(dbConn)
 	dbBuildFactory := db.NewBuildFactory(dbConn, lockFactory, cmd.GC.OneOffBuildGracePeriod)
 	dbCheckFactory := db.NewCheckFactory(dbConn, lockFactory)
@@ -829,7 +831,10 @@ func (cmd *RunCommand) constructBackendMembers(
 				gc.NewResourceConfigCollector(dbResourceConfigFactory),
 				gc.NewResourceCacheCollector(dbResourceCacheLifecycle),
 				gc.NewArtifactCollector(dbArtifactLifecycle),
-				gc.NewCheckCollector(dbCheckLifecycle),
+				gc.NewCheckCollector(
+					dbCheckLifecycle,
+					cmd.GC.CheckRecyclePeriod,
+				),
 				gc.NewVolumeCollector(
 					dbVolumeRepository,
 					cmd.GC.MissingGracePeriod,

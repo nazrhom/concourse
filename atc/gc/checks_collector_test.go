@@ -2,6 +2,7 @@ package gc_test
 
 import (
 	"context"
+	"time"
 
 	"github.com/concourse/concourse/atc/db/dbfakes"
 	"github.com/concourse/concourse/atc/gc"
@@ -16,7 +17,7 @@ var _ = Describe("CheckCollector", func() {
 	BeforeEach(func() {
 		fakeCheckLifecycle = new(dbfakes.FakeCheckLifecycle)
 
-		collector = gc.NewCheckCollector(fakeCheckLifecycle)
+		collector = gc.NewCheckCollector(fakeCheckLifecycle, time.Hour*24)
 	})
 
 	Describe("Run", func() {
@@ -25,6 +26,8 @@ var _ = Describe("CheckCollector", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(fakeCheckLifecycle.RemoveExpiredChecksCallCount()).To(Equal(1))
+			recyclePeriod := fakeCheckLifecycle.RemoveExpiredChecksArgsForCall(0)
+			Expect(recyclePeriod).To(Equal(time.Hour * 24))
 		})
 	})
 })

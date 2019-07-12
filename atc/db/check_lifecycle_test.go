@@ -1,12 +1,14 @@
 package db_test
 
 import (
+	"time"
+
 	"github.com/concourse/concourse/atc/db"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
-var _ = FDescribe("CheckLifecycle", func() {
+var _ = Describe("CheckLifecycle", func() {
 	var checkLifecycle db.CheckLifecycle
 
 	BeforeEach(func() {
@@ -15,7 +17,7 @@ var _ = FDescribe("CheckLifecycle", func() {
 
 	Describe("RemoveExpiredChecks", func() {
 		JustBeforeEach(func() {
-			err := checkLifecycle.RemoveExpiredChecks()
+			err := checkLifecycle.RemoveExpiredChecks(time.Hour * 24)
 			Expect(err).ToNot(HaveOccurred())
 		})
 

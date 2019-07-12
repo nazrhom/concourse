@@ -1,13 +1,16 @@
 package db
 
 import (
+	"fmt"
+	"time"
+
 	sq "github.com/Masterminds/squirrel"
 )
 
 //go:generate counterfeiter . CheckLifecycle
 
 type CheckLifecycle interface {
-	RemoveExpiredChecks() error
+	RemoveExpiredChecks(time.Duration) error
 }
 
 type checkLifecycle struct {
@@ -20,12 +23,14 @@ func NewCheckLifecycle(conn Conn) *checkLifecycle {
 	}
 }
 
-func (lifecycle *checkLifecycle) RemoveExpiredChecks() error {
+func (lifecycle *checkLifecycle) RemoveExpiredChecks(recyclePeriod time.Duration) error {
 
 	_, err := psql.Delete("checks").
 		Where(
 			sq.And{
-				sq.Expr("create_time < NOW() - interval '24 hours'"),
+				sq.Gt{
+					"Now() - create_time": fmt.Sprintf("%.0f seconds", recyclePeriod.Seconds()),
+				},
 				sq.NotEq{"status": CheckStatusStarted},
 			},
 		).
