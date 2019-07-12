@@ -50,8 +50,9 @@ var (
 	dbWorkerLifecycle       *dbfakes.FakeWorkerLifecycle
 	build                   *dbfakes.FakeBuild
 	dbBuildFactory          *dbfakes.FakeBuildFactory
+	dbCheckFactory          *dbfakes.FakeCheckFactory
 	dbTeam                  *dbfakes.FakeTeam
-	fakeScannerFactory      *resourceserverfakes.FakeScannerFactory
+	fakeChecker             *resourceserverfakes.FakeChecker
 	fakeSecretManager       *credsfakes.FakeSecrets
 	credsManagers           creds.Managers
 	interceptTimeoutFactory *containerserverfakes.FakeInterceptTimeoutFactory
@@ -94,6 +95,7 @@ var _ = BeforeEach(func() {
 	dbResourceFactory = new(dbfakes.FakeResourceFactory)
 	dbResourceConfigFactory = new(dbfakes.FakeResourceConfigFactory)
 	dbBuildFactory = new(dbfakes.FakeBuildFactory)
+	dbCheckFactory = new(dbfakes.FakeCheckFactory)
 
 	interceptTimeoutFactory = new(containerserverfakes.FakeInterceptTimeoutFactory)
 	interceptTimeout = new(containerserverfakes.FakeInterceptTimeout)
@@ -116,7 +118,7 @@ var _ = BeforeEach(func() {
 
 	fakeWorkerClient = new(workerfakes.FakeClient)
 
-	fakeScannerFactory = new(resourceserverfakes.FakeScannerFactory)
+	fakeChecker = new(resourceserverfakes.FakeChecker)
 
 	fakeVolumeRepository = new(dbfakes.FakeVolumeRepository)
 	fakeContainerRepository = new(dbfakes.FakeContainerRepository)
@@ -171,13 +173,14 @@ var _ = BeforeEach(func() {
 		fakeContainerRepository,
 		fakeDestroyer,
 		dbBuildFactory,
+		dbCheckFactory,
 		dbResourceConfigFactory,
 
 		constructedEventHandler.Construct,
 
 		fakeWorkerClient,
 
-		fakeScannerFactory,
+		fakeChecker,
 
 		sink,
 

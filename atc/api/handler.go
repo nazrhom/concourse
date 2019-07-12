@@ -9,6 +9,7 @@ import (
 	"github.com/concourse/concourse/atc/api/artifactserver"
 	"github.com/concourse/concourse/atc/api/buildserver"
 	"github.com/concourse/concourse/atc/api/ccserver"
+	"github.com/concourse/concourse/atc/api/checkserver"
 	"github.com/concourse/concourse/atc/api/cliserver"
 	"github.com/concourse/concourse/atc/api/configserver"
 	"github.com/concourse/concourse/atc/api/containerserver"
@@ -47,13 +48,14 @@ func NewHandler(
 	containerRepository db.ContainerRepository,
 	destroyer gc.Destroyer,
 	dbBuildFactory db.BuildFactory,
+	dbCheckFactory db.CheckFactory,
 	dbResourceConfigFactory db.ResourceConfigFactory,
 
 	eventHandlerFactory buildserver.EventHandlerFactory,
 
 	workerClient worker.Client,
 
-	scannerFactory resourceserver.ScannerFactory,
+	checker resourceserver.Checker,
 
 	sink *lager.ReconfigurableSink,
 
@@ -77,8 +79,9 @@ func NewHandler(
 	teamHandlerFactory := NewTeamScopedHandlerFactory(logger, dbTeamFactory)
 
 	buildServer := buildserver.NewServer(logger, externalURL, dbTeamFactory, dbBuildFactory, eventHandlerFactory)
+	checkServer := checkserver.NewServer(logger, dbCheckFactory)
 	jobServer := jobserver.NewServer(logger, externalURL, secretManager, dbJobFactory)
-	resourceServer := resourceserver.NewServer(logger, scannerFactory, secretManager, dbResourceFactory, dbResourceConfigFactory)
+	resourceServer := resourceserver.NewServer(logger, secretManager, checker, dbResourceFactory, dbResourceConfigFactory)
 
 	versionServer := versionserver.NewServer(logger, externalURL)
 	pipelineServer := pipelineserver.NewServer(logger, dbTeamFactory, dbPipelineFactory, externalURL)
@@ -108,6 +111,8 @@ func NewHandler(
 		atc.GetBuildPreparation: buildHandlerFactory.HandlerFor(buildServer.GetBuildPreparation),
 		atc.BuildEvents:         buildHandlerFactory.HandlerFor(buildServer.BuildEvents),
 		atc.ListBuildArtifacts:  buildHandlerFactory.HandlerFor(buildServer.GetBuildArtifacts),
+
+		atc.GetCheck: http.HandlerFunc(checkServer.GetCheck),
 
 		atc.ListAllJobs:    http.HandlerFunc(jobServer.ListAllJobs),
 		atc.ListJobs:       pipelineHandlerFactory.HandlerFor(jobServer.ListJobs),
