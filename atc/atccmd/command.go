@@ -582,6 +582,7 @@ func (cmd *RunCommand) constructAPIMembers(
 	dbContainerRepository := db.NewContainerRepository(dbConn)
 	gcContainerDestroyer := gc.NewDestroyer(logger, dbContainerRepository, dbVolumeRepository)
 	dbBuildFactory := db.NewBuildFactory(dbConn, lockFactory, cmd.GC.OneOffBuildGracePeriod)
+	dbCheckFactory := db.NewCheckFactory(dbConn, lockFactory)
 	accessFactory := accessor.NewAccessFactory(authHandler.PublicKey())
 
 	apiHandler, err := cmd.constructAPIHandler(
@@ -596,6 +597,7 @@ func (cmd *RunCommand) constructAPIMembers(
 		dbContainerRepository,
 		gcContainerDestroyer,
 		dbBuildFactory,
+		dbCheckFactory,
 		dbResourceConfigFactory,
 		workerClient,
 		checker,
@@ -1323,6 +1325,7 @@ func (cmd *RunCommand) constructAPIHandler(
 	dbContainerRepository db.ContainerRepository,
 	gcContainerDestroyer gc.Destroyer,
 	dbBuildFactory db.BuildFactory,
+	dbCheckFactory db.CheckFactory,
 	resourceConfigFactory db.ResourceConfigFactory,
 	workerClient worker.Client,
 	checker resourceserver.Checker,
@@ -1375,6 +1378,7 @@ func (cmd *RunCommand) constructAPIHandler(
 		dbContainerRepository,
 		gcContainerDestroyer,
 		dbBuildFactory,
+		dbCheckFactory,
 		resourceConfigFactory,
 
 		buildserver.NewEventHandler,

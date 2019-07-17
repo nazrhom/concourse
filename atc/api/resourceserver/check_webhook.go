@@ -1,10 +1,12 @@
 package resourceserver
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
 	"code.cloudfoundry.org/lager"
+	"github.com/concourse/concourse/atc/api/present"
 	"github.com/concourse/concourse/atc/creds"
 	"github.com/concourse/concourse/atc/db"
 	"github.com/tedsuo/rata"
@@ -52,17 +54,26 @@ func (s *Server) CheckResourceWebHook(dbPipeline db.Pipeline) http.Handler {
 			return
 		}
 
-		created, err := s.checker.Check(dbResource, dbResourceTypes, nil)
+		check, created, err := s.checker.Check(dbResource, dbResourceTypes, nil)
 		if err != nil {
 			s.logger.Error("failed-to-create-check", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		if !created {
+			s.logger.Info("check-not-created")
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
-		if created {
-			w.WriteHeader(http.StatusCreated)
-		} else {
-			w.WriteHeader(http.StatusOK)
+		w.WriteHeader(http.StatusCreated)
+
+		err = json.NewEncoder(w).Encode(present.Check(check))
+		if err != nil {
+			logger.Error("failed-to-encode-check", err)
+			w.WriteHeader(http.StatusInternalServerError)
 		}
 	})
 }

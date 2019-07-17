@@ -625,10 +625,6 @@ var _ = Describe("Resources API", func() {
 						Expect(actualFromVersion).To(BeNil())
 					})
 
-					It("returns 200", func() {
-						Expect(response.StatusCode).To(Equal(http.StatusOK))
-					})
-
 					Context("when checking with a version specified", func() {
 						BeforeEach(func() {
 							checkRequestBody = atc.CheckRequestBody{
@@ -649,7 +645,17 @@ var _ = Describe("Resources API", func() {
 
 					Context("when checking fails", func() {
 						BeforeEach(func() {
-							fakeChecker.CheckReturns(false, errors.New("nope"))
+							fakeChecker.CheckReturns(nil, false, errors.New("nope"))
+						})
+
+						It("returns 500", func() {
+							Expect(response.StatusCode).To(Equal(http.StatusInternalServerError))
+						})
+					})
+
+					Context("when checking does not create a new check", func() {
+						BeforeEach(func() {
+							fakeChecker.CheckReturns(nil, false, nil)
 						})
 
 						It("returns 500", func() {
@@ -658,22 +664,28 @@ var _ = Describe("Resources API", func() {
 					})
 
 					Context("when checking creates a new check", func() {
+						var fakeCheck *dbfakes.FakeCheck
+
 						BeforeEach(func() {
-							fakeChecker.CheckReturns(true, nil)
+							fakeCheck = new(dbfakes.FakeCheck)
+							fakeCheck.IDReturns(10)
+							fakeCheck.StatusReturns("started")
+							fakeCheck.CreateTimeReturns(time.Date(2000, 01, 01, 0, 0, 0, 0, time.UTC))
+							fakeCheck.StartTimeReturns(time.Date(2001, 01, 01, 0, 0, 0, 0, time.UTC))
+							fakeCheck.EndTimeReturns(time.Date(2002, 01, 01, 0, 0, 0, 0, time.UTC))
+
+							fakeChecker.CheckReturns(fakeCheck, true, nil)
 						})
 
 						It("returns 201", func() {
 							Expect(response.StatusCode).To(Equal(http.StatusCreated))
-						})
-					})
-
-					Context("when checking does not create a new check", func() {
-						BeforeEach(func() {
-							fakeChecker.CheckReturns(false, nil)
-						})
-
-						It("returns 200", func() {
-							Expect(response.StatusCode).To(Equal(http.StatusOK))
+							Expect(ioutil.ReadAll(response.Body)).To(MatchJSON(`{
+                 "id": 10,
+								 "status": "started",
+								 "create_time": 946684800,
+								 "start_time": 978307200,
+								 "end_time": 1009843200
+							}`))
 						})
 					})
 				})
@@ -1274,7 +1286,17 @@ var _ = Describe("Resources API", func() {
 
 					Context("when checking fails", func() {
 						BeforeEach(func() {
-							fakeChecker.CheckReturns(false, errors.New("nope"))
+							fakeChecker.CheckReturns(nil, false, errors.New("nope"))
+						})
+
+						It("returns 500", func() {
+							Expect(response.StatusCode).To(Equal(http.StatusInternalServerError))
+						})
+					})
+
+					Context("when checking does not create a new check", func() {
+						BeforeEach(func() {
+							fakeChecker.CheckReturns(nil, false, nil)
 						})
 
 						It("returns 500", func() {
@@ -1283,24 +1305,31 @@ var _ = Describe("Resources API", func() {
 					})
 
 					Context("when checking creates a new check", func() {
+						var fakeCheck *dbfakes.FakeCheck
+
 						BeforeEach(func() {
-							fakeChecker.CheckReturns(true, nil)
+							fakeCheck = new(dbfakes.FakeCheck)
+							fakeCheck.IDReturns(10)
+							fakeCheck.StatusReturns("started")
+							fakeCheck.CreateTimeReturns(time.Date(2000, 01, 01, 0, 0, 0, 0, time.UTC))
+							fakeCheck.StartTimeReturns(time.Date(2001, 01, 01, 0, 0, 0, 0, time.UTC))
+							fakeCheck.EndTimeReturns(time.Date(2002, 01, 01, 0, 0, 0, 0, time.UTC))
+
+							fakeChecker.CheckReturns(fakeCheck, true, nil)
 						})
 
 						It("returns 201", func() {
 							Expect(response.StatusCode).To(Equal(http.StatusCreated))
+							Expect(ioutil.ReadAll(response.Body)).To(MatchJSON(`{
+                 "id": 10,
+								 "status": "started",
+								 "create_time": 946684800,
+								 "start_time": 978307200,
+								 "end_time": 1009843200
+							}`))
 						})
 					})
 
-					Context("when checking does not create a new check", func() {
-						BeforeEach(func() {
-							fakeChecker.CheckReturns(false, nil)
-						})
-
-						It("returns 200", func() {
-							Expect(response.StatusCode).To(Equal(http.StatusOK))
-						})
-					})
 				})
 			})
 		})
@@ -1390,7 +1419,17 @@ var _ = Describe("Resources API", func() {
 
 					Context("when checking fails", func() {
 						BeforeEach(func() {
-							fakeChecker.CheckReturns(false, errors.New("nope"))
+							fakeChecker.CheckReturns(nil, false, errors.New("nope"))
+						})
+
+						It("returns 500", func() {
+							Expect(response.StatusCode).To(Equal(http.StatusInternalServerError))
+						})
+					})
+
+					Context("when checking does not create a new check", func() {
+						BeforeEach(func() {
+							fakeChecker.CheckReturns(nil, false, nil)
 						})
 
 						It("returns 500", func() {
@@ -1399,22 +1438,28 @@ var _ = Describe("Resources API", func() {
 					})
 
 					Context("when checking creates a new check", func() {
+						var fakeCheck *dbfakes.FakeCheck
+
 						BeforeEach(func() {
-							fakeChecker.CheckReturns(true, nil)
+							fakeCheck = new(dbfakes.FakeCheck)
+							fakeCheck.IDReturns(10)
+							fakeCheck.StatusReturns("started")
+							fakeCheck.CreateTimeReturns(time.Date(2000, 01, 01, 0, 0, 0, 0, time.UTC))
+							fakeCheck.StartTimeReturns(time.Date(2001, 01, 01, 0, 0, 0, 0, time.UTC))
+							fakeCheck.EndTimeReturns(time.Date(2002, 01, 01, 0, 0, 0, 0, time.UTC))
+
+							fakeChecker.CheckReturns(fakeCheck, true, nil)
 						})
 
 						It("returns 201", func() {
 							Expect(response.StatusCode).To(Equal(http.StatusCreated))
-						})
-					})
-
-					Context("when checking does not create a new check", func() {
-						BeforeEach(func() {
-							fakeChecker.CheckReturns(false, nil)
-						})
-
-						It("returns 200", func() {
-							Expect(response.StatusCode).To(Equal(http.StatusOK))
+							Expect(ioutil.ReadAll(response.Body)).To(MatchJSON(`{
+                 "id": 10,
+								 "status": "started",
+								 "create_time": 946684800,
+								 "start_time": 978307200,
+								 "end_time": 1009843200
+							}`))
 						})
 					})
 				})

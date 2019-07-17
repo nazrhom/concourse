@@ -36,8 +36,9 @@ type Checkable interface {
 //go:generate counterfeiter . CheckFactory
 
 type CheckFactory interface {
+	Check(int) (Check, bool, error)
 	StartedChecks() ([]Check, error)
-	CreateCheck(int, int, int, atc.Plan) (Check, bool, error)
+	CreateCheck(int, int, int, bool, atc.Plan) (Check, bool, error)
 	Resources() ([]Resource, error)
 	ResourceTypes() ([]ResourceType, error)
 	AcquireScanningLock(lager.Logger) (lock.Lock, bool, error)
@@ -67,6 +68,27 @@ func (c *checkFactory) AcquireScanningLock(
 	)
 }
 
+func (c *checkFactory) Check(id int) (Check, bool, error) {
+	check := &check{
+		conn:        c.conn,
+		lockFactory: c.lockFactory,
+	}
+
+	row := checksQuery.
+		Where(sq.Eq{"c.id": id}).
+		RunWith(c.conn).
+		QueryRow()
+
+	err := scanCheck(check, row)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, false, nil
+		}
+		return nil, false, err
+	}
+
+	return check, true, nil
+}
 func (c *checkFactory) StartedChecks() ([]Check, error) {
 	rows, err := checksQuery.
 		Where(sq.Eq{"status": CheckStatusStarted}).
@@ -93,7 +115,7 @@ func (c *checkFactory) StartedChecks() ([]Check, error) {
 	return checks, nil
 }
 
-func (c *checkFactory) CreateCheck(resourceConfigScopeID int, resourceConfigID int, baseResourceTypeID int, plan atc.Plan) (Check, bool, error) {
+func (c *checkFactory) CreateCheck(resourceConfigScopeID int, resourceConfigID int, baseResourceTypeID int, manuallyTriggered bool, plan atc.Plan) (Check, bool, error) {
 	tx, err := c.conn.Begin()
 	if err != nil {
 		return nil, false, err
@@ -121,6 +143,7 @@ func (c *checkFactory) CreateCheck(resourceConfigScopeID int, resourceConfigID i
 			"base_resource_type_id",
 			"schema",
 			"status",
+			"manually_triggered",
 			"plan",
 			"nonce",
 		).
@@ -130,6 +153,7 @@ func (c *checkFactory) CreateCheck(resourceConfigScopeID int, resourceConfigID i
 			baseResourceTypeID,
 			schema,
 			CheckStatusStarted,
+			manuallyTriggered,
 			encryptedPayload,
 			nonce,
 		).

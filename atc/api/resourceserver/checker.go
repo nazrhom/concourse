@@ -13,7 +13,7 @@ import (
 //go:generate counterfeiter . Checker
 
 type Checker interface {
-	Check(checkable db.Checkable, resourceTypes db.ResourceTypes, fromVersion atc.Version) (bool, error)
+	Check(checkable db.Checkable, resourceTypes db.ResourceTypes, fromVersion atc.Version) (db.Check, bool, error)
 }
 
 func NewChecker(
@@ -37,7 +37,7 @@ type checker struct {
 	defaultCheckTimeout time.Duration
 }
 
-func (s *checker) Check(checkable db.Checkable, resourceTypes db.ResourceTypes, fromVersion atc.Version) (bool, error) {
+func (s *checker) Check(checkable db.Checkable, resourceTypes db.ResourceTypes, fromVersion atc.Version) (db.Check, bool, error) {
 
 	var err error
 
@@ -46,7 +46,7 @@ func (s *checker) Check(checkable db.Checkable, resourceTypes db.ResourceTypes, 
 	parentType, found := s.parentType(checkable, filteredTypes)
 	if found {
 		if parentType.Version() == nil {
-			return false, errors.New("parent type has no version")
+			return nil, false, errors.New("parent type has no version")
 		}
 	}
 
@@ -55,7 +55,7 @@ func (s *checker) Check(checkable db.Checkable, resourceTypes db.ResourceTypes, 
 		timeout, err = time.ParseDuration(to)
 		if err != nil {
 			s.logger.Error("failed-to-parse-check-timeout", err)
-			return false, err
+			return nil, false, err
 		}
 	}
 
@@ -68,27 +68,27 @@ func (s *checker) Check(checkable db.Checkable, resourceTypes db.ResourceTypes, 
 	source, err := creds.NewSource(variables, checkable.Source()).Evaluate()
 	if err != nil {
 		s.logger.Error("failed-to-evaluate-source", err)
-		return false, err
+		return nil, false, err
 	}
 
 	versionedResourceTypes, err := creds.NewVersionedResourceTypes(variables, filteredTypes.Deserialize()).Evaluate()
 	if err != nil {
 		s.logger.Error("failed-to-evaluate-resource-types", err)
-		return false, err
+		return nil, false, err
 	}
 
 	// This could have changed based on new variable interpolation so update it
 	resourceConfigScope, err := checkable.SetResourceConfig(source, versionedResourceTypes)
 	if err != nil {
 		s.logger.Error("failed-to-update-resource-config", err)
-		return false, err
+		return nil, false, err
 	}
 
 	if fromVersion == nil {
 		rcv, found, err := resourceConfigScope.LatestVersion()
 		if err != nil {
 			s.logger.Error("failed-to-get-current-version", err)
-			return false, err
+			return nil, false, err
 		}
 
 		if found {
@@ -109,18 +109,19 @@ func (s *checker) Check(checkable db.Checkable, resourceTypes db.ResourceTypes, 
 		},
 	}
 
-	_, created, err := s.checkFactory.CreateCheck(
+	check, created, err := s.checkFactory.CreateCheck(
 		resourceConfigScope.ID(),
 		resourceConfigScope.ResourceConfig().ID(),
 		resourceConfigScope.ResourceConfig().OriginBaseResourceType().ID,
+		true,
 		plan,
 	)
 	if err != nil {
 		s.logger.Error("failed-to-create-check", err)
-		return false, err
+		return nil, false, err
 	}
 
-	return created, nil
+	return check, created, nil
 }
 
 func (s *checker) parentType(checkable db.Checkable, resourceTypes []db.ResourceType) (db.ResourceType, bool) {

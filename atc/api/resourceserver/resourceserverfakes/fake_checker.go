@@ -10,7 +10,7 @@ import (
 )
 
 type FakeChecker struct {
-	CheckStub        func(db.Checkable, db.ResourceTypes, atc.Version) (bool, error)
+	CheckStub        func(db.Checkable, db.ResourceTypes, atc.Version) (db.Check, bool, error)
 	checkMutex       sync.RWMutex
 	checkArgsForCall []struct {
 		arg1 db.Checkable
@@ -18,18 +18,20 @@ type FakeChecker struct {
 		arg3 atc.Version
 	}
 	checkReturns struct {
-		result1 bool
-		result2 error
+		result1 db.Check
+		result2 bool
+		result3 error
 	}
 	checkReturnsOnCall map[int]struct {
-		result1 bool
-		result2 error
+		result1 db.Check
+		result2 bool
+		result3 error
 	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeChecker) Check(arg1 db.Checkable, arg2 db.ResourceTypes, arg3 atc.Version) (bool, error) {
+func (fake *FakeChecker) Check(arg1 db.Checkable, arg2 db.ResourceTypes, arg3 atc.Version) (db.Check, bool, error) {
 	fake.checkMutex.Lock()
 	ret, specificReturn := fake.checkReturnsOnCall[len(fake.checkArgsForCall)]
 	fake.checkArgsForCall = append(fake.checkArgsForCall, struct {
@@ -43,10 +45,10 @@ func (fake *FakeChecker) Check(arg1 db.Checkable, arg2 db.ResourceTypes, arg3 at
 		return fake.CheckStub(arg1, arg2, arg3)
 	}
 	if specificReturn {
-		return ret.result1, ret.result2
+		return ret.result1, ret.result2, ret.result3
 	}
 	fakeReturns := fake.checkReturns
-	return fakeReturns.result1, fakeReturns.result2
+	return fakeReturns.result1, fakeReturns.result2, fakeReturns.result3
 }
 
 func (fake *FakeChecker) CheckCallCount() int {
@@ -55,7 +57,7 @@ func (fake *FakeChecker) CheckCallCount() int {
 	return len(fake.checkArgsForCall)
 }
 
-func (fake *FakeChecker) CheckCalls(stub func(db.Checkable, db.ResourceTypes, atc.Version) (bool, error)) {
+func (fake *FakeChecker) CheckCalls(stub func(db.Checkable, db.ResourceTypes, atc.Version) (db.Check, bool, error)) {
 	fake.checkMutex.Lock()
 	defer fake.checkMutex.Unlock()
 	fake.CheckStub = stub
@@ -68,30 +70,33 @@ func (fake *FakeChecker) CheckArgsForCall(i int) (db.Checkable, db.ResourceTypes
 	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3
 }
 
-func (fake *FakeChecker) CheckReturns(result1 bool, result2 error) {
+func (fake *FakeChecker) CheckReturns(result1 db.Check, result2 bool, result3 error) {
 	fake.checkMutex.Lock()
 	defer fake.checkMutex.Unlock()
 	fake.CheckStub = nil
 	fake.checkReturns = struct {
-		result1 bool
-		result2 error
-	}{result1, result2}
+		result1 db.Check
+		result2 bool
+		result3 error
+	}{result1, result2, result3}
 }
 
-func (fake *FakeChecker) CheckReturnsOnCall(i int, result1 bool, result2 error) {
+func (fake *FakeChecker) CheckReturnsOnCall(i int, result1 db.Check, result2 bool, result3 error) {
 	fake.checkMutex.Lock()
 	defer fake.checkMutex.Unlock()
 	fake.CheckStub = nil
 	if fake.checkReturnsOnCall == nil {
 		fake.checkReturnsOnCall = make(map[int]struct {
-			result1 bool
-			result2 error
+			result1 db.Check
+			result2 bool
+			result3 error
 		})
 	}
 	fake.checkReturnsOnCall[i] = struct {
-		result1 bool
-		result2 error
-	}{result1, result2}
+		result1 db.Check
+		result2 bool
+		result3 error
+	}{result1, result2, result3}
 }
 
 func (fake *FakeChecker) Invocations() map[string][][]interface{} {
