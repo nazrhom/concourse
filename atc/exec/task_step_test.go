@@ -490,7 +490,7 @@ var _ = Describe("TaskStep", func() {
 						It("attaches to saved process name", func() {
 							Expect(fakeContainer.AttachCallCount()).To(Equal(1))
 
-							pid, _ := fakeContainer.AttachArgsForCall(0)
+							_, pid, _ := fakeContainer.AttachArgsForCall(0)
 							Expect(pid).To(Equal("task"))
 						})
 					})
@@ -498,7 +498,7 @@ var _ = Describe("TaskStep", func() {
 					It("directs the process's stdout/stderr to the io config", func() {
 						Expect(fakeContainer.AttachCallCount()).To(Equal(1))
 
-						_, pio := fakeContainer.AttachArgsForCall(0)
+						_, _, pio := fakeContainer.AttachArgsForCall(0)
 						Expect(pio.Stdout).To(Equal(stdoutBuf))
 						Expect(pio.Stderr).To(Equal(stderrBuf))
 					})
@@ -531,7 +531,7 @@ var _ = Describe("TaskStep", func() {
 					It("runs a process with the config's path and args, in the specified (default) build directory", func() {
 						Expect(fakeContainer.RunCallCount()).To(Equal(1))
 
-						containerSpec, _ := fakeContainer.RunArgsForCall(0)
+						_, containerSpec, _ := fakeContainer.RunArgsForCall(0)
 						Expect(containerSpec.ID).To(Equal("task"))
 						Expect(containerSpec.Path).To(Equal("ls"))
 						Expect(containerSpec.Args).To(Equal([]string{"some", "args"}))
@@ -543,7 +543,7 @@ var _ = Describe("TaskStep", func() {
 					It("directs the process's stdout/stderr to the io config", func() {
 						Expect(fakeContainer.RunCallCount()).To(Equal(1))
 
-						_, io := fakeContainer.RunArgsForCall(0)
+						_, _, io := fakeContainer.RunArgsForCall(0)
 						Expect(io.Stdout).To(Equal(stdoutBuf))
 						Expect(io.Stderr).To(Equal(stderrBuf))
 					})
@@ -562,7 +562,7 @@ var _ = Describe("TaskStep", func() {
 						It("runs the process as the specified user", func() {
 							Expect(fakeContainer.RunCallCount()).To(Equal(1))
 
-							containerSpec, _ := fakeContainer.RunArgsForCall(0)
+							_, containerSpec, _ := fakeContainer.RunArgsForCall(0)
 							Expect(containerSpec).To(Equal(garden.ProcessSpec{
 								ID:   "task",
 								Path: "ls",
@@ -1084,7 +1084,7 @@ var _ = Describe("TaskStep", func() {
 									return 128 + 15, nil
 								}
 
-								fakeContainer.StopStub = func(bool) error {
+								fakeContainer.StopStub = func( bool) error {
 									close(stopped)
 									return nil
 								}
@@ -1094,7 +1094,8 @@ var _ = Describe("TaskStep", func() {
 
 							It("stops the container", func() {
 								Expect(fakeContainer.StopCallCount()).To(Equal(1))
-								Expect(fakeContainer.StopArgsForCall(0)).To(BeFalse())
+								isStopped := fakeContainer.StopArgsForCall(0)
+								Expect(isStopped).To(BeFalse())
 								Expect(stepErr).To(Equal(context.Canceled))
 							})
 
@@ -1440,7 +1441,7 @@ var _ = Describe("TaskStep", func() {
 						})
 
 						It("runs a process in the specified (custom) directory", func() {
-							containerSpec, _ := fakeContainer.RunArgsForCall(0)
+							_, containerSpec, _ := fakeContainer.RunArgsForCall(0)
 							Expect(containerSpec.Dir).To(Equal("some-artifact-root/some/dir"))
 						})
 					})
@@ -1456,7 +1457,7 @@ var _ = Describe("TaskStep", func() {
 						})
 
 						It("doesn't bother adding the user to the run spec", func() {
-							containerSpec, _ := fakeContainer.RunArgsForCall(0)
+							_, containerSpec, _ := fakeContainer.RunArgsForCall(0)
 							Expect(containerSpec.User).To(BeEmpty())
 						})
 					})
@@ -1629,7 +1630,7 @@ var _ = Describe("TaskStep", func() {
 								return 128 + 15, nil
 							}
 
-							fakeContainer.StopStub = func(bool) error {
+							fakeContainer.StopStub = func( bool) error {
 								close(stopped)
 								return nil
 							}
@@ -1639,7 +1640,8 @@ var _ = Describe("TaskStep", func() {
 
 						It("stops the container", func() {
 							Expect(fakeContainer.StopCallCount()).To(Equal(1))
-							Expect(fakeContainer.StopArgsForCall(0)).To(BeFalse())
+							isStopped := fakeContainer.StopArgsForCall(0)
+							Expect(isStopped).To(BeFalse())
 							Expect(stepErr).To(Equal(context.Canceled))
 						})
 

@@ -285,7 +285,7 @@ func (step *TaskStep) Run(ctx context.Context, state RunState) error {
 		Stderr: step.delegate.Stderr(),
 	}
 
-	process, err := container.Attach(taskProcessID, processIO)
+	process, err := container.Attach(context.TODO(), taskProcessID, processIO)
 	if err == nil {
 		logger.Info("already-running")
 	} else {
@@ -294,6 +294,7 @@ func (step *TaskStep) Run(ctx context.Context, state RunState) error {
 		step.delegate.Starting(logger, config)
 
 		process, err = container.Run(
+			context.TODO(),
 			garden.ProcessSpec{
 				ID: taskProcessID,
 
