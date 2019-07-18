@@ -13,6 +13,6 @@ var _ = Describe("When a resource type depends on another resource type", func()
 
 	It("can be checked immediately", func() {
 		checkS := fly("check-resource", "-r", inPipeline("recursive-custom-resource"))
-		Expect(checkS).To(gbytes.Say("checked 'recursive-custom-resource'"))
+		Expect(checkS).To(gbytes.Say("started"))
 	})
 })
