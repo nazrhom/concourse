@@ -58,7 +58,11 @@ func (resourceTypes ResourceTypes) Filter(resourceType string) ResourceTypes {
 
 	for _, t := range resourceTypes {
 		if t.Name() == resourceType {
-			result = append(resourceTypes.Filter(t.Type()), t)
+			if t.Name() == t.Type() {
+				result = append(result, t)
+			} else {
+				result = append(resourceTypes.Filter(t.Type()), t)
+			}
 		}
 	}
 

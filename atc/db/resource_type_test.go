@@ -142,13 +142,13 @@ var _ = Describe("ResourceType", func() {
 					atc.Config{
 						ResourceTypes: atc.ResourceTypes{
 							{
-								Name:   "some-type",
+								Name:   "registry-image",
 								Type:   "registry-image",
 								Source: atc.Source{"some": "repository"},
 							},
 							{
 								Name:       "some-other-type",
-								Type:       "registry-image-ng",
+								Type:       "registry-image",
 								Privileged: true,
 								Source:     atc.Source{"some": "other-repository"},
 							},
@@ -187,13 +187,15 @@ var _ = Describe("ResourceType", func() {
 
 			It("returns the resource types tree given type name", func() {
 				tree := resourceTypes.Filter("some-custom-type")
-				Expect(len(tree)).To(Equal(3))
-				Expect(tree[0].Name()).To(Equal("some-other-type"))
-				Expect(tree[0].Type()).To(Equal("registry-image-ng"))
-				Expect(tree[1].Name()).To(Equal("some-other-foo-type"))
-				Expect(tree[1].Type()).To(Equal("some-other-type"))
-				Expect(tree[2].Name()).To(Equal("some-custom-type"))
-				Expect(tree[2].Type()).To(Equal("some-other-foo-type"))
+				Expect(len(tree)).To(Equal(4))
+				Expect(tree[0].Name()).To(Equal("registry-image"))
+				Expect(tree[0].Type()).To(Equal("registry-image"))
+				Expect(tree[1].Name()).To(Equal("some-other-type"))
+				Expect(tree[1].Type()).To(Equal("registry-image"))
+				Expect(tree[2].Name()).To(Equal("some-other-foo-type"))
+				Expect(tree[2].Type()).To(Equal("some-other-type"))
+				Expect(tree[3].Name()).To(Equal("some-custom-type"))
+				Expect(tree[3].Type()).To(Equal("some-other-foo-type"))
 			})
 		})
 	})
