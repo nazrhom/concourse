@@ -53,6 +53,17 @@ type ResourceType interface {
 
 type ResourceTypes []ResourceType
 
+func (resourceTypes ResourceTypes) Parent(checkable Checkable) (ResourceType, bool) {
+	for _, t := range resourceTypes {
+		if t.PipelineID() == checkable.PipelineID() {
+			if t.Name() != checkable.Name() && t.Name() == checkable.Type() {
+				return t, true
+			}
+		}
+	}
+	return nil, false
+}
+
 func (resourceTypes ResourceTypes) Filter(resourceType string) ResourceTypes {
 	var result ResourceTypes
 
