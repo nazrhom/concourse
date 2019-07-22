@@ -64,20 +64,18 @@ func (resourceTypes ResourceTypes) Parent(checkable Checkable) (ResourceType, bo
 	return nil, false
 }
 
-func (resourceTypes ResourceTypes) Filter(resourceType string) ResourceTypes {
+func (resourceTypes ResourceTypes) Filter(checkable Checkable) ResourceTypes {
 	var result ResourceTypes
 
-	for _, t := range resourceTypes {
-		if t.Name() == resourceType {
-			if t.Name() == t.Type() {
-				result = append(result, t)
-			} else {
-				result = append(resourceTypes.Filter(t.Type()), t)
-			}
+	for {
+		resourceType, found := resourceTypes.Parent(checkable)
+		if !found {
+			return result
 		}
-	}
 
-	return result
+		result = append(result, resourceType)
+		checkable = resourceType
+	}
 }
 
 func (resourceTypes ResourceTypes) Deserialize() atc.VersionedResourceTypes {

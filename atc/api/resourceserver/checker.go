@@ -69,7 +69,7 @@ func (s *checker) Check(checkable db.Checkable, resourceTypes db.ResourceTypes, 
 		return nil, false, err
 	}
 
-	filteredTypes := resourceTypes.Filter(checkable.Type()).Deserialize()
+	filteredTypes := resourceTypes.Filter(checkable).Deserialize()
 	versionedResourceTypes, err := creds.NewVersionedResourceTypes(variables, filteredTypes).Evaluate()
 	if err != nil {
 		s.logger.Error("failed-to-evaluate-resource-types", err)
