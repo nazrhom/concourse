@@ -570,7 +570,6 @@ func (cmd *RunCommand) constructAPIMembers(
 	workerClient := worker.NewClient(pool, workerProvider)
 
 	checker := resourceserver.NewChecker(
-		logger,
 		secretManager,
 		checkFactory,
 		cmd.GlobalResourceCheckTimeout,
@@ -805,7 +804,7 @@ func (cmd *RunCommand) constructBackendMembers(
 				dbCheckFactory,
 				engine,
 			),
-			10*time.Second,
+			10*time.Minute,
 			bus,
 		)},
 		{Name: "pipelines", Runner: pipelines.SyncRunner{
