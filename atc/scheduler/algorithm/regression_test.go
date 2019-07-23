@@ -4,7 +4,7 @@ import (
 	. "github.com/onsi/ginkgo/extensions/table"
 )
 
-var _ = DescribeTable("Input resolving",
+var _ = FDescribeTable("Input resolving",
 	(Example).Run,
 
 	Entry("bosh memory leak regression test", Example{
@@ -195,7 +195,7 @@ var _ = DescribeTable("Input resolving",
 		},
 	}),
 
-	FEntry("relint rc high cpu regression test", Example{
+	Entry("relint rc high cpu regression test", Example{
 		LoadDB: "testdata/relint-versions-2.json.gz",
 
 		Inputs: Inputs{

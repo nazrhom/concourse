@@ -1275,7 +1275,7 @@ var _ = DescribeTable("Input resolving",
 		},
 	}),
 
-	FEntry("returns the next set of versions that satisfy constraints when using every version", Example{
+	Entry("returns the next set of versions that satisfy constraints when using every version", Example{
 		DB: DB{
 			BuildInputs: []DBRow{
 				{Job: CurrentJobName, BuildID: 100, Resource: "resource-x", Version: "rxv1", CheckOrder: 1},
