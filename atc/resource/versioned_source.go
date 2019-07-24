@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"github.com/concourse/concourse/atc/runtime"
 	"io"
 	"path"
 
@@ -20,18 +21,18 @@ type VersionedSource interface {
 	Volume() worker.Volume
 }
 
-type VersionResult struct {
-	Version atc.Version `json:"version"`
-
-	Metadata []atc.MetadataField `json:"metadata,omitempty"`
-}
+//type VersionResult struct {
+//	Version atc.Version `json:"version"`
+//
+//	Metadata []atc.MetadataField `json:"metadata,omitempty"`
+//}
 
 func NewGetVersionedSource(volume worker.Volume, version atc.Version, metadata []atc.MetadataField) VersionedSource {
 	return &getVersionedSource{
 		volume:      volume,
 		resourceDir: ResourcesDir("get"),
 
-		versionResult: VersionResult{
+		versionResult: runtime.VersionResult{
 			Version:  version,
 			Metadata: metadata,
 		},
@@ -39,7 +40,7 @@ func NewGetVersionedSource(volume worker.Volume, version atc.Version, metadata [
 }
 
 type getVersionedSource struct {
-	versionResult VersionResult
+	versionResult runtime.VersionResult
 
 	volume      worker.Volume
 	resourceDir string

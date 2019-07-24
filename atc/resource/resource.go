@@ -2,7 +2,7 @@ package resource
 
 import (
 	"context"
-	"io"
+	"github.com/concourse/concourse/atc/runtime"
 	"path/filepath"
 
 	"github.com/concourse/concourse/atc"
@@ -13,8 +13,8 @@ import (
 //go:generate counterfeiter . Resource
 
 type Resource interface {
-	Get(context.Context, worker.Volume, IOConfig, atc.Source, atc.Params, atc.Version) (VersionedSource, error)
-	Put(context.Context, IOConfig, atc.Source, atc.Params) (VersionResult, error)
+	Get(context.Context, worker.Volume, runtime.IOConfig, atc.Source, atc.Params, atc.Version) (VersionedSource, error)
+	Put(context.Context, runtime.IOConfig, atc.Source, atc.Params) (runtime.VersionResult, error)
 	Check(context.Context, atc.Source, atc.Version) ([]atc.Version, error)
 }
 
@@ -28,20 +28,17 @@ type Metadata interface {
 	Env() []string
 }
 
-type IOConfig struct {
-	Stdout io.Writer
-	Stderr io.Writer
-}
+//type IOConfig struct {
+//	Stdout io.Writer
+//	Stderr io.Writer
+//}
 
-// TODO: check if we need it
 func ResourcesDir(suffix string) string {
 	return filepath.Join("/tmp", "build", suffix)
 }
 
 type resource struct {
 	container worker.Container
-
-	ScriptFailure bool
 }
 
 //go:generate counterfeiter . ResourceFactory

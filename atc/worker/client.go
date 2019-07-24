@@ -34,6 +34,21 @@ type Client interface {
 		TaskProcessSpec,
 		chan runtime.Event,
 	) TaskResult
+	RunPutStep(
+		ctx context.Context,
+		logger lager.Logger,
+		owner db.ContainerOwner,
+		containerSpec ContainerSpec,
+		workerSpec WorkerSpec,
+		source atc.Source,
+		params atc.Params,
+		strategy ContainerPlacementStrategy,
+		metadata db.ContainerMetadata,
+		imageSpec ImageFetcherSpec,
+		resourceDir string,
+		ioConfig runtime.IOConfig,
+		events chan runtime.Event,
+	) (*runtime.VersionResult, error)
 }
 
 func NewClient(pool Pool, provider WorkerProvider) *client {
@@ -47,7 +62,6 @@ type client struct {
 	pool     Pool
 	provider WorkerProvider
 }
-
 
 type TaskResult struct {
 	Status       int
@@ -133,7 +147,7 @@ func (client *client) RunTaskStep(
 		strategy,
 	)
 	if err != nil {
-		return TaskResult{- 1, []VolumeMount{}, err}
+		return TaskResult{-1, []VolumeMount{}, err}
 	}
 
 	container, err := chosenWorker.FindOrCreateContainer(
@@ -147,7 +161,7 @@ func (client *client) RunTaskStep(
 	)
 
 	if err != nil {
-		return TaskResult{Status:- 1, VolumeMounts: []VolumeMount{}, Err: err}
+		return TaskResult{Status: -1, VolumeMounts: []VolumeMount{}, Err: err}
 	}
 
 	// container already exited
@@ -157,10 +171,10 @@ func (client *client) RunTaskStep(
 
 		status, err := strconv.Atoi(exitStatusProp)
 		if err != nil {
-			return TaskResult{- 1, []VolumeMount{}, err}
+			return TaskResult{-1, []VolumeMount{}, err}
 		}
 
-		return TaskResult { Status: status, VolumeMounts: container.VolumeMounts(), Err: nil }
+		return TaskResult{Status: status, VolumeMounts: container.VolumeMounts(), Err: nil}
 	}
 
 	processIO := garden.ProcessIO{
@@ -220,23 +234,137 @@ func (client *client) RunTaskStep(
 
 		<-exited
 
-		return TaskResult{ Status: status.processStatus, VolumeMounts: container.VolumeMounts(), Err: ctx.Err() }
+		return TaskResult{Status: status.processStatus, VolumeMounts: container.VolumeMounts(), Err: ctx.Err()}
 
 	case <-exited:
 		if status.processErr != nil {
-			return TaskResult{ Status: status.processStatus, VolumeMounts: []VolumeMount{}, Err: status.processErr }
+			return TaskResult{Status: status.processStatus, VolumeMounts: []VolumeMount{}, Err: status.processErr}
 		}
 
 		err = container.SetProperty(taskExitStatusPropertyName, fmt.Sprintf("%d", status.processStatus))
 		if err != nil {
-			return TaskResult { Status: status.processStatus, VolumeMounts: []VolumeMount{}, Err: err }
+			return TaskResult{Status: status.processStatus, VolumeMounts: []VolumeMount{}, Err: err}
 		}
 
-		return TaskResult{ Status: status.processStatus, VolumeMounts: container.VolumeMounts(), Err: nil }
+		return TaskResult{Status: status.processStatus, VolumeMounts: container.VolumeMounts(), Err: nil}
 	}
 }
 
 type processStatus struct {
 	processStatus int
-	processErr error
+	processErr    error
+}
+
+func (client *client) RunPutStep(
+	ctx context.Context,
+	logger lager.Logger,
+	owner db.ContainerOwner,
+	containerSpec ContainerSpec,
+	workerSpec WorkerSpec,
+	source atc.Source,
+	params atc.Params,
+	strategy ContainerPlacementStrategy,
+	metadata db.ContainerMetadata,
+	imageSpec ImageFetcherSpec,
+	resourceDir string,
+	ioConfig runtime.IOConfig,
+	events chan runtime.Event,
+) (*runtime.VersionResult, error) {
+
+	vr := &runtime.VersionResult{}
+
+	chosenWorker, err := client.pool.FindOrChooseWorkerForContainer(
+		ctx,
+		logger,
+		owner,
+		containerSpec,
+		workerSpec,
+		strategy,
+	)
+	if err != nil {
+		return vr, err
+	}
+
+	container, err := chosenWorker.FindOrCreateContainer(
+		ctx,
+		logger,
+		imageSpec.Delegate,
+		owner,
+		metadata,
+		containerSpec,
+		imageSpec.ResourceTypes,
+	)
+	if err != nil {
+		return vr, err
+	}
+
+	// container already exited
+	exitStatusProp, err := container.Property(taskExitStatusPropertyName)
+	if err == nil {
+		logger.Info("already-exited", lager.Data{"status": exitStatusProp})
+		return vr, nil
+	}
+
+	//resourceDir := ResourcesDir("put")
+	events <- runtime.Event{
+		EventType: runtime.StartingEvent,
+	}
+
+	err = RunScript(
+		ctx,
+		container,
+		"/opt/resource/out",
+		[]string{resourceDir},
+		runtime.PutRequest{
+			Params: params,
+			Source: source,
+		},
+		&vr,
+		ioConfig.Stderr,
+		true,
+	)
+	if err != nil {
+		return vr, err
+	}
+
+	//putResource := step.resourceFactory.NewResourceForContainer(container)
+	//versionResult, err := putResource.Put(
+	//	ctx,
+	//	resource.IOConfig{
+	//		Stdout: step.delegate.Stdout(),
+	//		Stderr: step.delegate.Stderr(),
+	//	},
+	//	source,
+	//	params,
+	//)
+
+	//if err != nil {
+	//	logger.Error("failed-to-put-resource", err)
+	//
+	//	if err, ok := err.(resource.ErrResourceScriptFailed); ok {
+	//		imageSpec.Delegate.Finished(logger, ExitStatus(err.ExitStatus), VersionInfo{})
+	//		return nil
+	//	}
+	//
+	//	return err
+	//}
+    // return vr, nil
+
+	exited := make(chan string)
+
+	select {
+	case <-ctx.Done():
+		err = container.Stop(false)
+		if err != nil {
+			logger.Error("stopping-container", err)
+		}
+
+		<-exited
+
+		return vr, ctx.Err()
+
+	case <-exited:
+
+		return vr, nil
+	}
 }
