@@ -215,7 +215,7 @@ func (c *check) finish(status CheckStatus, checkError error) error {
 func (c *check) AcquireTrackingLock(logger lager.Logger) (lock.Lock, bool, error) {
 	return c.lockFactory.Acquire(
 		logger,
-		lock.NewCheckTrackingLockID(c.ID()),
+		lock.NewCheckTrackingLockID(c.ResourceConfigScopeID()),
 	)
 }
 
