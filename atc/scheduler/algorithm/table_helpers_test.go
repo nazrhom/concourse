@@ -635,13 +635,17 @@ func (example Example) Run() {
 
 		actualResult.Values = prettyValues
 
-		Expect(actualResult.OK).To(Equal(example.Result.OK))
-		Expect(actualResult.Errors).To(Equal(example.Result.Errors))
-		Expect(actualResult.Values).To(Equal(example.Result.Values))
-		Expect(actualResult.Skipped).To(Equal(example.Result.Skipped))
+		if len(example.Result.PassedBuildIDs) > 0 {
+			Expect(actualResult.OK).To(Equal(example.Result.OK))
+			Expect(actualResult.Errors).To(Equal(example.Result.Errors))
+			Expect(actualResult.Values).To(Equal(example.Result.Values))
+			Expect(actualResult.Skipped).To(Equal(example.Result.Skipped))
 
-		for input, buildIDs := range example.Result.PassedBuildIDs {
-			Expect(actualResult.PassedBuildIDs[input]).To(ConsistOf(buildIDs))
+			for input, buildIDs := range example.Result.PassedBuildIDs {
+				Expect(actualResult.PassedBuildIDs[input]).To(ConsistOf(buildIDs))
+			}
+		} else {
+			Expect(actualResult).To(Equal(example.Result))
 		}
 	}
 }
