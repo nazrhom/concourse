@@ -34,7 +34,8 @@ var _ = Describe("ATC Users Handler", func() {
 				users, err := client.ListActiveUsersSince(expectedTime)
 
 				Expect(err).NotTo(HaveOccurred())
-				Expect(users).To(Equal(expectedUsers))
+				Expect(len(users)).To(Equal(1))
+				Expect(users[0]).To(Equal(expectedUsers[0]))
 			})
 		})
 	})

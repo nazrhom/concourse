@@ -17,7 +17,7 @@ var _ = Describe("User Factory", func() {
 	)
 
 	JustBeforeEach(func() {
-		user, err = userFactory.CreateOrUpdateUser("test", "github")
+		user, err = userFactory.CreateOrUpdateUser("test", "github", "sub")
 		Expect(err).ToNot(HaveOccurred())
 
 	})
@@ -35,7 +35,7 @@ var _ = Describe("User Factory", func() {
 		var user2 db.User
 
 		JustBeforeEach(func() {
-			user2, err = userFactory.CreateOrUpdateUser("test", "basic")
+			user2, err = userFactory.CreateOrUpdateUser("test", "basic", "sub")
 			Expect(err).ToNot(HaveOccurred())
 		})
 
@@ -55,7 +55,7 @@ var _ = Describe("User Factory", func() {
 		var updatedUser db.User
 
 		JustBeforeEach(func() {
-			updatedUser, err = userFactory.CreateOrUpdateUser("test", "github")
+			updatedUser, err = userFactory.CreateOrUpdateUser("test", "github", "sub")
 			Expect(err).ToNot(HaveOccurred())
 
 		})
