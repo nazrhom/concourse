@@ -40,6 +40,10 @@ const (
 	CheckResourceWebHook = "CheckResourceWebHook"
 	CheckResourceType    = "CheckResourceType"
 
+	CheckResourceV2        = "CheckResourceV2"
+	CheckResourceWebHookV2 = "CheckResourceWebHookV2"
+	CheckResourceTypeV2    = "CheckResourceTypeV22"
+
 	ListResourceVersions          = "ListResourceVersions"
 	GetResourceVersion            = "GetResourceVersion"
 	EnableResourceVersion         = "EnableResourceVersion"
@@ -162,6 +166,10 @@ var Routes = rata.Routes([]rata.Route{
 	{Path: "/api/v1/teams/:team_name/pipelines/:pipeline_name/resources/:resource_name/check", Method: "POST", Name: CheckResource},
 	{Path: "/api/v1/teams/:team_name/pipelines/:pipeline_name/resources/:resource_name/check/webhook", Method: "POST", Name: CheckResourceWebHook},
 	{Path: "/api/v1/teams/:team_name/pipelines/:pipeline_name/resource-types/:resource_type_name/check", Method: "POST", Name: CheckResourceType},
+
+	{Path: "/api/v2/teams/:team_name/pipelines/:pipeline_name/resources/:resource_name/check", Method: "POST", Name: CheckResourceV2},
+	{Path: "/api/v2/teams/:team_name/pipelines/:pipeline_name/resources/:resource_name/check/webhook", Method: "POST", Name: CheckResourceWebHookV2},
+	{Path: "/api/v2/teams/:team_name/pipelines/:pipeline_name/resource-types/:resource_type_name/check", Method: "POST", Name: CheckResourceTypeV2},
 
 	{Path: "/api/v1/teams/:team_name/pipelines/:pipeline_name/resources/:resource_name/versions", Method: "GET", Name: ListResourceVersions},
 	{Path: "/api/v1/teams/:team_name/pipelines/:pipeline_name/resources/:resource_name/versions/:resource_config_version_id", Method: "GET", Name: GetResourceVersion},

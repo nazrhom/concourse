@@ -52,6 +52,7 @@ var (
 	dbBuildFactory          *dbfakes.FakeBuildFactory
 	dbCheckFactory          *dbfakes.FakeCheckFactory
 	dbTeam                  *dbfakes.FakeTeam
+	fakeScannerFactory      *resourceserverfakes.FakeScannerFactory
 	fakeChecker             *resourceserverfakes.FakeChecker
 	fakeSecretManager       *credsfakes.FakeSecrets
 	credsManagers           creds.Managers
@@ -118,6 +119,8 @@ var _ = BeforeEach(func() {
 
 	fakeWorkerClient = new(workerfakes.FakeClient)
 
+	fakeScannerFactory = new(resourceserverfakes.FakeScannerFactory)
+
 	fakeChecker = new(resourceserverfakes.FakeChecker)
 
 	fakeVolumeRepository = new(dbfakes.FakeVolumeRepository)
@@ -179,6 +182,7 @@ var _ = BeforeEach(func() {
 		constructedEventHandler.Construct,
 
 		fakeWorkerClient,
+		fakeScannerFactory,
 
 		fakeChecker,
 

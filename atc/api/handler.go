@@ -55,6 +55,8 @@ func NewHandler(
 
 	workerClient worker.Client,
 
+	scannerFactory resourceserver.ScannerFactory,
+
 	checker resourceserver.Checker,
 
 	sink *lager.ReconfigurableSink,
@@ -81,7 +83,7 @@ func NewHandler(
 	buildServer := buildserver.NewServer(logger, externalURL, dbTeamFactory, dbBuildFactory, eventHandlerFactory)
 	checkServer := checkserver.NewServer(logger, dbCheckFactory)
 	jobServer := jobserver.NewServer(logger, externalURL, secretManager, dbJobFactory)
-	resourceServer := resourceserver.NewServer(logger, secretManager, checker, dbResourceFactory, dbResourceConfigFactory)
+	resourceServer := resourceserver.NewServer(logger, scannerFactory, secretManager, checker, dbResourceFactory, dbResourceConfigFactory)
 
 	versionServer := versionserver.NewServer(logger, externalURL)
 	pipelineServer := pipelineserver.NewServer(logger, dbTeamFactory, dbPipelineFactory, externalURL)
@@ -155,6 +157,9 @@ func NewHandler(
 		atc.CheckResource:           pipelineHandlerFactory.HandlerFor(resourceServer.CheckResource),
 		atc.CheckResourceWebHook:    pipelineHandlerFactory.HandlerFor(resourceServer.CheckResourceWebHook),
 		atc.CheckResourceType:       pipelineHandlerFactory.HandlerFor(resourceServer.CheckResourceType),
+		atc.CheckResourceV2:         pipelineHandlerFactory.HandlerFor(resourceServer.CheckResourceV2),
+		atc.CheckResourceWebHookV2:  pipelineHandlerFactory.HandlerFor(resourceServer.CheckResourceWebHookV2),
+		atc.CheckResourceTypeV2:     pipelineHandlerFactory.HandlerFor(resourceServer.CheckResourceTypeV2),
 
 		atc.ListResourceVersions:          pipelineHandlerFactory.HandlerFor(versionServer.ListResourceVersions),
 		atc.GetResourceVersion:            pipelineHandlerFactory.HandlerFor(versionServer.GetResourceVersion),

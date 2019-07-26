@@ -101,6 +101,7 @@ func (wrappa *APIAuthWrappa) Wrap(handlers rata.Handlers) rata.Handlers {
 		// unauthenticated / delegating to handler (validate token if provided)
 		case atc.DownloadCLI,
 			atc.CheckResourceWebHook,
+			atc.CheckResourceWebHookV2,
 			atc.GetInfo,
 			atc.GetCheck,
 			atc.ListTeams,
@@ -119,7 +120,9 @@ func (wrappa *APIAuthWrappa) Wrap(handlers rata.Handlers) rata.Handlers {
 
 		// authorized (requested team matches resource team)
 		case atc.CheckResource,
+			atc.CheckResourceV2,
 			atc.CheckResourceType,
+			atc.CheckResourceTypeV2,
 			atc.CreateJobBuild,
 			atc.CreatePipelineBuild,
 			atc.DeletePipeline,

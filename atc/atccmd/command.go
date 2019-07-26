@@ -112,6 +112,7 @@ type RunCommand struct {
 	InterceptIdleTimeout time.Duration `long:"intercept-idle-timeout" default:"0m" description:"Length of time for a intercepted session to be idle before terminating."`
 
 	EnableGlobalResources bool `long:"enable-global-resources" description:"Enable equivalent resources across pipelines and teams to share a single version history."`
+	EnableLidar           bool `long:"enable-lidar" description:"The Future™ of resource checking."`
 
 	GlobalResourceCheckTimeout   time.Duration `long:"global-resource-check-timeout" default:"1h" description:"Time limit on checking for new versions of resources."`
 	ResourceCheckingInterval     time.Duration `long:"resource-checking-interval" default:"1m" description:"Interval on which to check for new versions of resources."`
@@ -569,6 +570,17 @@ func (cmd *RunCommand) constructAPIMembers(
 	pool := worker.NewPool(workerProvider)
 	workerClient := worker.NewClient(pool, workerProvider)
 
+	radarScannerFactory := radar.NewScannerFactory(
+		pool,
+		resourceFactory,
+		dbResourceConfigFactory,
+		cmd.ResourceTypeCheckingInterval,
+		cmd.ResourceCheckingInterval,
+		cmd.ExternalURL.String(),
+		secretManager,
+		worker.NewRandomPlacementStrategy(),
+	)
+
 	checker := resourceserver.NewChecker(
 		secretManager,
 		checkFactory,
@@ -600,6 +612,7 @@ func (cmd *RunCommand) constructAPIMembers(
 		dbCheckFactory,
 		dbResourceConfigFactory,
 		workerClient,
+		radarScannerFactory,
 		checker,
 		secretManager,
 		credsManagers,
@@ -788,31 +801,13 @@ func (cmd *RunCommand) constructBackendMembers(
 	bus := dbConn.Bus()
 
 	members := []grouper.Member{
-		{Name: "lidar", Runner: lidar.NewRunner(
-			logger.Session("lidar"),
-			clock.NewClock(),
-			lidar.NewScanner(
-				logger.Session("lidar-scanner"),
-				dbCheckFactory,
-				secretManager,
-				cmd.GlobalResourceCheckTimeout,
-				cmd.ResourceCheckingInterval,
-			),
-			10*time.Second,
-			lidar.NewChecker(
-				logger.Session("lidar-checker"),
-				dbCheckFactory,
-				engine,
-			),
-			10*time.Minute,
-			bus,
-		)},
 		{Name: "pipelines", Runner: pipelines.SyncRunner{
 			Syncer: cmd.constructPipelineSyncer(
 				logger.Session("pipelines"),
 				dbPipelineFactory,
 				radarSchedulerFactory,
 				secretManager,
+				bus,
 			),
 			Interval: 10 * time.Second,
 			Clock:    clock.NewClock(),
@@ -884,7 +879,30 @@ func (cmd *RunCommand) constructBackendMembers(
 		)},
 	}
 
-	//Syslog Drainer Configuration
+	if cmd.EnableLidar {
+		members = append(members, grouper.Member{
+			Name: "lidar", Runner: lidar.NewRunner(
+				logger.Session("lidar"),
+				clock.NewClock(),
+				lidar.NewScanner(
+					logger.Session("lidar-scanner"),
+					dbCheckFactory,
+					secretManager,
+					cmd.GlobalResourceCheckTimeout,
+					cmd.ResourceCheckingInterval,
+				),
+				10*time.Second,
+				lidar.NewChecker(
+					logger.Session("lidar-checker"),
+					dbCheckFactory,
+					engine,
+				),
+				10*time.Minute,
+				bus,
+			)},
+		)
+	}
+
 	if syslogDrainConfigured {
 		members = append(members, grouper.Member{
 			Name: "syslog", Runner: lockrunner.NewRunner(
@@ -1303,7 +1321,7 @@ func (cmd *RunCommand) constructHTTPHandler(
 	authHandler http.Handler,
 ) http.Handler {
 	webMux := http.NewServeMux()
-	webMux.Handle("/api/v1/", apiHandler)
+	webMux.Handle("/api/", apiHandler)
 	webMux.Handle("/sky/", authHandler)
 	webMux.Handle("/auth/", authHandler)
 	webMux.Handle("/login", authHandler)
@@ -1342,6 +1360,7 @@ func (cmd *RunCommand) constructAPIHandler(
 	dbCheckFactory db.CheckFactory,
 	resourceConfigFactory db.ResourceConfigFactory,
 	workerClient worker.Client,
+	radarScannerFactory radar.ScannerFactory,
 	checker resourceserver.Checker,
 	secretManager creds.Secrets,
 	credsManagers creds.Managers,
@@ -1398,6 +1417,7 @@ func (cmd *RunCommand) constructAPIHandler(
 		buildserver.NewEventHandler,
 
 		workerClient,
+		radarScannerFactory,
 		checker,
 
 		reconfigurableSink,
@@ -1439,24 +1459,41 @@ func (cmd *RunCommand) constructPipelineSyncer(
 	pipelineFactory db.PipelineFactory,
 	radarSchedulerFactory pipelines.RadarSchedulerFactory,
 	secretManager creds.Secrets,
+	bus db.NotificationsBus,
 ) *pipelines.Syncer {
 	return pipelines.NewSyncer(
 		logger,
 		pipelineFactory,
 		func(pipeline db.Pipeline) ifrit.Runner {
-			return grouper.Member{
-				Name: fmt.Sprintf("scheduler:%d", pipeline.ID()),
-				Runner: &scheduler.Runner{
-					Logger: logger.Session("scheduler", lager.Data{
-						"team":     pipeline.TeamName(),
-						"pipeline": pipeline.Name(),
-					}),
-					Pipeline:  pipeline,
-					Scheduler: radarSchedulerFactory.BuildScheduler(pipeline),
-					Noop:      cmd.Developer.Noop,
-					Interval:  10 * time.Second,
+			variables := creds.NewVariables(secretManager, pipeline.TeamName(), pipeline.Name())
+			return grouper.NewParallel(os.Interrupt, grouper.Members{
+				{
+					Name: fmt.Sprintf("radar:%d", pipeline.ID()),
+					Runner: radar.NewRunner(
+						logger.Session("radar").WithData(lager.Data{
+							"team":     pipeline.TeamName(),
+							"pipeline": pipeline.Name(),
+						}),
+						(cmd.Developer.Noop || cmd.EnableLidar),
+						radarSchedulerFactory.BuildScanRunnerFactory(pipeline, cmd.ExternalURL.String(), variables, bus),
+						pipeline,
+						1*time.Minute,
+					),
 				},
-			}
+				{
+					Name: fmt.Sprintf("scheduler:%d", pipeline.ID()),
+					Runner: &scheduler.Runner{
+						Logger: logger.Session("scheduler", lager.Data{
+							"team":     pipeline.TeamName(),
+							"pipeline": pipeline.Name(),
+						}),
+						Pipeline:  pipeline,
+						Scheduler: radarSchedulerFactory.BuildScheduler(pipeline),
+						Noop:      cmd.Developer.Noop,
+						Interval:  10 * time.Second,
+					},
+				},
+			})
 		},
 	)
 }

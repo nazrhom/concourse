@@ -13,22 +13,32 @@ import (
 
 var _ = Describe("CheckResourceType", func() {
 	Context("when ATC request succeeds", func() {
-		BeforeEach(func() {
-			expectedURL := "/api/v1/teams/some-team/pipelines/mypipeline/resource-types/myresource/check"
+		var expectedCheck atc.Check
 
+		BeforeEach(func() {
+			expectedCheck = atc.Check{
+				ID:         123,
+				Status:     "started",
+				CreateTime: 100000000000,
+				StartTime:  100000000000,
+				EndTime:    100000000000,
+			}
+
+			expectedURL := "/api/v2/teams/some-team/pipelines/mypipeline/resource-types/myresource/check"
 			atcServer.AppendHandlers(
 				ghttp.CombineHandlers(
 					ghttp.VerifyRequest("POST", expectedURL),
 					ghttp.VerifyJSON(`{"from":{"ref":"fake-ref"}}`),
-					ghttp.RespondWithJSONEncoded(http.StatusOK, ""),
+					ghttp.RespondWithJSONEncoded(http.StatusOK, expectedCheck),
 				),
 			)
 		})
 
 		It("sends check resource request to ATC", func() {
-			found, err := team.CheckResourceType("mypipeline", "myresource", atc.Version{"ref": "fake-ref"})
+			check, found, err := team.CheckResourceTypeV2("mypipeline", "myresource", atc.Version{"ref": "fake-ref"})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(found).To(BeTrue())
+			Expect(check).To(Equal(expectedCheck))
 
 			Expect(atcServer.ReceivedRequests()).To(HaveLen(1))
 		})
@@ -36,7 +46,7 @@ var _ = Describe("CheckResourceType", func() {
 
 	Context("when pipeline or resource-type does not exist", func() {
 		BeforeEach(func() {
-			expectedURL := "/api/v1/teams/some-team/pipelines/mypipeline/resource-types/myresource/check"
+			expectedURL := "/api/v2/teams/some-team/pipelines/mypipeline/resource-types/myresource/check"
 			atcServer.AppendHandlers(
 				ghttp.CombineHandlers(
 					ghttp.VerifyRequest("POST", expectedURL),
@@ -46,7 +56,7 @@ var _ = Describe("CheckResourceType", func() {
 		})
 
 		It("returns a ResourceNotFoundError", func() {
-			found, err := team.CheckResourceType("mypipeline", "myresource", atc.Version{"ref": "fake-ref"})
+			_, found, err := team.CheckResourceTypeV2("mypipeline", "myresource", atc.Version{"ref": "fake-ref"})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(found).To(BeFalse())
 		})
@@ -54,7 +64,7 @@ var _ = Describe("CheckResourceType", func() {
 
 	Context("when ATC responds with an internal server error", func() {
 		BeforeEach(func() {
-			expectedURL := "/api/v1/teams/some-team/pipelines/mypipeline/resource-types/myresource/check"
+			expectedURL := "/api/v2/teams/some-team/pipelines/mypipeline/resource-types/myresource/check"
 
 			atcServer.AppendHandlers(
 				ghttp.CombineHandlers(
@@ -65,7 +75,7 @@ var _ = Describe("CheckResourceType", func() {
 		})
 
 		It("returns an error", func() {
-			_, err := team.CheckResourceType("mypipeline", "myresource", atc.Version{"ref": "fake-ref"})
+			_, _, err := team.CheckResourceTypeV2("mypipeline", "myresource", atc.Version{"ref": "fake-ref"})
 			Expect(err).To(HaveOccurred())
 
 			cre, ok := err.(concourse.GenericError)

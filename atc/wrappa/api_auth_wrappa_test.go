@@ -200,17 +200,18 @@ var _ = Describe("APIAuthWrappa", func() {
 				atc.DestroyTeam:     authenticated(inputHandlers[atc.DestroyTeam]),
 
 				//authenticateIfTokenProvided / delegating to handler
-				atc.GetInfo:              authenticateIfTokenProvided(inputHandlers[atc.GetInfo]),
-				atc.GetCheck:             authenticateIfTokenProvided(inputHandlers[atc.GetCheck]),
-				atc.DownloadCLI:          authenticateIfTokenProvided(inputHandlers[atc.DownloadCLI]),
-				atc.CheckResourceWebHook: authenticateIfTokenProvided(inputHandlers[atc.CheckResourceWebHook]),
-				atc.ListAllPipelines:     authenticateIfTokenProvided(inputHandlers[atc.ListAllPipelines]),
-				atc.ListBuilds:           authenticateIfTokenProvided(inputHandlers[atc.ListBuilds]),
-				atc.ListPipelines:        authenticateIfTokenProvided(inputHandlers[atc.ListPipelines]),
-				atc.ListAllJobs:          authenticateIfTokenProvided(inputHandlers[atc.ListAllJobs]),
-				atc.ListAllResources:     authenticateIfTokenProvided(inputHandlers[atc.ListAllResources]),
-				atc.ListTeams:            authenticateIfTokenProvided(inputHandlers[atc.ListTeams]),
-				atc.MainJobBadge:         authenticateIfTokenProvided(inputHandlers[atc.MainJobBadge]),
+				atc.GetInfo:                authenticateIfTokenProvided(inputHandlers[atc.GetInfo]),
+				atc.GetCheck:               authenticateIfTokenProvided(inputHandlers[atc.GetCheck]),
+				atc.DownloadCLI:            authenticateIfTokenProvided(inputHandlers[atc.DownloadCLI]),
+				atc.CheckResourceWebHook:   authenticateIfTokenProvided(inputHandlers[atc.CheckResourceWebHook]),
+				atc.CheckResourceWebHookV2: authenticateIfTokenProvided(inputHandlers[atc.CheckResourceWebHookV2]),
+				atc.ListAllPipelines:       authenticateIfTokenProvided(inputHandlers[atc.ListAllPipelines]),
+				atc.ListBuilds:             authenticateIfTokenProvided(inputHandlers[atc.ListBuilds]),
+				atc.ListPipelines:          authenticateIfTokenProvided(inputHandlers[atc.ListPipelines]),
+				atc.ListAllJobs:            authenticateIfTokenProvided(inputHandlers[atc.ListAllJobs]),
+				atc.ListAllResources:       authenticateIfTokenProvided(inputHandlers[atc.ListAllResources]),
+				atc.ListTeams:              authenticateIfTokenProvided(inputHandlers[atc.ListTeams]),
+				atc.MainJobBadge:           authenticateIfTokenProvided(inputHandlers[atc.MainJobBadge]),
 
 				// authenticated and is admin
 				atc.GetLogLevel:  authenticatedAndAdmin(inputHandlers[atc.GetLogLevel]),
@@ -220,6 +221,8 @@ var _ = Describe("APIAuthWrappa", func() {
 				// authorized (requested team matches resource team)
 				atc.CheckResource:           authorized(inputHandlers[atc.CheckResource]),
 				atc.CheckResourceType:       authorized(inputHandlers[atc.CheckResourceType]),
+				atc.CheckResourceV2:         authorized(inputHandlers[atc.CheckResourceV2]),
+				atc.CheckResourceTypeV2:     authorized(inputHandlers[atc.CheckResourceTypeV2]),
 				atc.CreateJobBuild:          authorized(inputHandlers[atc.CreateJobBuild]),
 				atc.DeletePipeline:          authorized(inputHandlers[atc.DeletePipeline]),
 				atc.DisableResourceVersion:  authorized(inputHandlers[atc.DisableResourceVersion]),

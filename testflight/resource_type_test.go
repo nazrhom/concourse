@@ -34,10 +34,10 @@ var _ = Describe("Configuring a resource type in a pipeline config", func() {
 		})
 
 		It("can check for resources using a custom type once the parent has a version", func() {
-			checkResourceType := fly("check-resource-type", "-r", inPipeline("custom-resource-type"), "-w")
+			checkResourceType := fly("check-resource-type-experimental", "-r", inPipeline("custom-resource-type"), "-w")
 			Expect(checkResourceType).To(gbytes.Say("succeeded"))
 
-			checkResource := fly("check-resource", "-r", inPipeline("my-resource"), "-w")
+			checkResource := fly("check-resource-experimental", "-r", inPipeline("my-resource"), "-w")
 			Expect(checkResource).To(gbytes.Say("succeeded"))
 		})
 	})

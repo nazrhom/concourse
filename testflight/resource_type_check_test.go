@@ -20,7 +20,7 @@ var _ = Describe("Resource-types checks", func() {
 	})
 
 	It("can check the resource-type", func() {
-		checkS := fly("check-resource-type", "-r", inPipeline("custom-resource-type"), "-w")
+		checkS := fly("check-resource-type-experimental", "-r", inPipeline("custom-resource-type"), "-w")
 		Eventually(checkS).Should(gbytes.Say("succeeded"))
 	})
 
@@ -33,9 +33,9 @@ var _ = Describe("Resource-types checks", func() {
 
 			newVersion = u.String()
 
-			fly("check-resource-type", "-r", inPipeline("custom-resource-type"), "-f", "version:"+newVersion, "-w")
+			fly("check-resource-type-experimental", "-r", inPipeline("custom-resource-type"), "-f", "version:"+newVersion, "-w")
 
-			fly("check-resource", "-r", inPipeline("my-resource-image"), "-w")
+			fly("check-resource-experimental", "-r", inPipeline("my-resource-image"), "-w")
 		})
 
 		It("uses the updated resource type", func() {
@@ -46,7 +46,7 @@ var _ = Describe("Resource-types checks", func() {
 
 	Context("when the resource-type check fails", func() {
 		It("fails", func() {
-			watch := spawnFly("check-resource-type", "-r", inPipeline("failing-custom-resource-type"), "-w")
+			watch := spawnFly("check-resource-type-experimental", "-r", inPipeline("failing-custom-resource-type"), "-w")
 			Eventually(watch.Out).Should(gbytes.Say("errored"))
 			Eventually(watch).Should(gexec.Exit(1))
 		})
