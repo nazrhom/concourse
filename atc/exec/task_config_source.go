@@ -6,10 +6,8 @@ import (
 	"io/ioutil"
 	"math"
 	"strconv"
-	"strings"
 
 	"code.cloudfoundry.org/lager"
-	"github.com/concourse/baggageclaim"
 	"github.com/concourse/concourse/atc"
 	"github.com/concourse/concourse/atc/exec/artifact"
 	"github.com/concourse/concourse/vars"
@@ -66,24 +64,8 @@ type FileConfigSource struct {
 // If the task config file is not found, or is invalid YAML, or is an invalid
 // task configuration, the respective errors will be bubbled up.
 func (configSource FileConfigSource) FetchConfig(logger lager.Logger, repo *artifact.Repository) (atc.TaskConfig, error) {
-	segs := strings.SplitN(configSource.ConfigPath, "/", 2)
-	if len(segs) != 2 {
-		return atc.TaskConfig{}, UnspecifiedArtifactSourceError{configSource.ConfigPath}
-	}
-
-	sourceName := artifact.Name(segs[0])
-	filePath := segs[1]
-
-	source, found := repo.SourceFor(sourceName)
-	if !found {
-		return atc.TaskConfig{}, UnknownArtifactSourceError{sourceName, configSource.ConfigPath}
-	}
-
-	stream, err := source.StreamFile(logger, filePath)
+	stream, err := repo.StreamFile(logger, configSource.ConfigPath)
 	if err != nil {
-		if err == baggageclaim.ErrFileNotFound {
-			return atc.TaskConfig{}, fmt.Errorf("task config '%s/%s' not found", sourceName, filePath)
-		}
 		return atc.TaskConfig{}, err
 	}
 
@@ -214,27 +196,4 @@ func (configSource ValidatingConfigSource) FetchConfig(logger lager.Logger, sour
 
 func (configSource ValidatingConfigSource) Warnings() []string {
 	return configSource.ConfigSource.Warnings()
-}
-
-// UnknownArtifactSourceError is returned when the artifact.Name specified by the
-// path does not exist in the artifact.Repository.
-type UnknownArtifactSourceError struct {
-	SourceName artifact.Name
-	ConfigPath string
-}
-
-// Error returns a human-friendly error message.
-func (err UnknownArtifactSourceError) Error() string {
-	return fmt.Sprintf("unknown artifact source: '%s' in task config file path '%s'", err.SourceName, err.ConfigPath)
-}
-
-// UnspecifiedArtifactSourceError is returned when the specified path is of a
-// file in the toplevel directory, and so it does not indicate a SourceName.
-type UnspecifiedArtifactSourceError struct {
-	Path string
-}
-
-// Error returns a human-friendly error message.
-func (err UnspecifiedArtifactSourceError) Error() string {
-	return fmt.Sprintf("config path '%s' does not specify where the file lives", err.Path)
 }

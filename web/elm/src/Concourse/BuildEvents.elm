@@ -67,7 +67,7 @@ decodeBuildEvent =
     Json.Decode.field "event" Json.Decode.string
         |> Json.Decode.andThen
             (\eventType ->
-                case eventType of
+                case Debug.log "event" eventType of
                     "status" ->
                         Json.Decode.field
                             "data"
@@ -150,6 +150,31 @@ decodeBuildEvent =
 
                     "finish-put" ->
                         Json.Decode.field "data" (decodeFinishResource FinishPut)
+
+                    "initialize" ->
+                        Json.Decode.field
+                            "data"
+                            (Json.Decode.map2 Initialize
+                                (Json.Decode.field "origin" decodeOrigin)
+                                (Json.Decode.field "time" <| Json.Decode.map dateFromSeconds Json.Decode.int)
+                            )
+
+                    "start" ->
+                        Json.Decode.field
+                            "data"
+                            (Json.Decode.map2 Start
+                                (Json.Decode.field "origin" decodeOrigin)
+                                (Json.Decode.field "time" <| Json.Decode.map dateFromSeconds Json.Decode.int)
+                            )
+
+                    "finish" ->
+                        Json.Decode.field
+                            "data"
+                            (Json.Decode.map3 Finish
+                                (Json.Decode.field "origin" decodeOrigin)
+                                (Json.Decode.field "time" <| Json.Decode.map dateFromSeconds Json.Decode.int)
+                                (Json.Decode.field "succeeded" Json.Decode.bool)
+                            )
 
                     unknown ->
                         Json.Decode.fail ("unknown event type: " ++ unknown)

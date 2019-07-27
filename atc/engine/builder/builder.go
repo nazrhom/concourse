@@ -21,6 +21,7 @@ type StepFactory interface {
 	TaskStep(atc.Plan, exec.StepMetadata, db.ContainerMetadata, exec.TaskDelegate, lock.LockFactory) exec.Step
 	ArtifactInputStep(atc.Plan, db.Build, exec.BuildStepDelegate) exec.Step
 	ArtifactOutputStep(atc.Plan, db.Build, exec.BuildStepDelegate) exec.Step
+	SetPipelineStep(atc.Plan, db.Build, exec.BuildStepDelegate) exec.Step
 }
 
 //go:generate counterfeiter . DelegateFactory
@@ -129,6 +130,10 @@ func (builder *stepBuilder) buildStep(build db.Build, plan atc.Plan) exec.Step {
 
 	if plan.ArtifactOutput != nil {
 		return builder.buildArtifactOutputStep(build, plan)
+	}
+
+	if plan.SetPipeline != nil {
+		return builder.buildSetPipelineStep(build, plan)
 	}
 
 	return exec.IdentityStep{}
@@ -320,6 +325,15 @@ func (builder *stepBuilder) buildArtifactInputStep(build db.Build, plan atc.Plan
 func (builder *stepBuilder) buildArtifactOutputStep(build db.Build, plan atc.Plan) exec.Step {
 
 	return builder.stepFactory.ArtifactOutputStep(
+		plan,
+		build,
+		builder.delegateFactory.BuildStepDelegate(build, plan.ID),
+	)
+}
+
+func (builder *stepBuilder) buildSetPipelineStep(build db.Build, plan atc.Plan) exec.Step {
+
+	return builder.stepFactory.SetPipelineStep(
 		plan,
 		build,
 		builder.delegateFactory.BuildStepDelegate(build, plan.ID),

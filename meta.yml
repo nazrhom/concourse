@@ -1,0 +1,13 @@
+---
+resources:
+- name: booklit
+  type: git
+  source:
+    uri: https://github.com/vito/booklit
+
+jobs:
+- name: set-pipeline
+  plan:
+  - get: booklit
+  - set_pipeline: booklit
+    file: booklit/ci/pipeline.yml

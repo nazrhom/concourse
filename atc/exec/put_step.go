@@ -1,9 +1,11 @@
 package exec
 
 import (
+	"context"
+	"io"
+
 	"code.cloudfoundry.org/lager"
 	"code.cloudfoundry.org/lager/lagerctx"
-	"context"
 	"github.com/concourse/concourse/atc"
 	"github.com/concourse/concourse/atc/creds"
 	"github.com/concourse/concourse/atc/db"
@@ -14,11 +16,16 @@ import (
 //go:generate counterfeiter . PutDelegate
 
 type PutDelegate interface {
-	BuildStepDelegate
+	ImageVersionDetermined(db.UsedResourceCache) error
+
+	Stdout() io.Writer
+	Stderr() io.Writer
 
 	Initializing(lager.Logger)
 	Starting(lager.Logger)
 	Finished(lager.Logger, ExitStatus, VersionInfo)
+	Errored(lager.Logger, string)
+
 	SaveOutput(lager.Logger, atc.PutPlan, atc.Source, atc.VersionedResourceTypes, VersionInfo)
 }
 

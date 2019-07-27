@@ -18,6 +18,7 @@ type stepFactory struct {
 	pool                  worker.Pool
 	client                worker.Client
 	resourceFetcher       resource.Fetcher
+	teamFactory           db.TeamFactory
 	resourceCacheFactory  db.ResourceCacheFactory
 	resourceConfigFactory db.ResourceConfigFactory
 	secretManager         creds.Secrets
@@ -30,6 +31,7 @@ func NewStepFactory(
 	pool worker.Pool,
 	client worker.Client,
 	resourceFetcher resource.Fetcher,
+	teamFactory db.TeamFactory,
 	resourceCacheFactory db.ResourceCacheFactory,
 	resourceConfigFactory db.ResourceConfigFactory,
 	secretManager creds.Secrets,
@@ -41,6 +43,7 @@ func NewStepFactory(
 		pool:                  pool,
 		client:                client,
 		resourceFetcher:       resourceFetcher,
+		teamFactory:           teamFactory,
 		resourceCacheFactory:  resourceCacheFactory,
 		resourceConfigFactory: resourceConfigFactory,
 		secretManager:         secretManager,
@@ -138,4 +141,12 @@ func (factory *stepFactory) ArtifactOutputStep(
 	delegate exec.BuildStepDelegate,
 ) exec.Step {
 	return exec.NewArtifactOutputStep(plan, build, factory.client, delegate)
+}
+
+func (factory *stepFactory) SetPipelineStep(
+	plan atc.Plan,
+	build db.Build,
+	delegate exec.BuildStepDelegate,
+) exec.Step {
+	return exec.NewSetPipelineStep(plan, build, factory.teamFactory, delegate)
 }

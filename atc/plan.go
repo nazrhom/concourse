@@ -4,24 +4,26 @@ type Plan struct {
 	ID       PlanID `json:"id"`
 	Attempts []int  `json:"attempts,omitempty"`
 
+	Get         *GetPlan         `json:"get,omitempty"`
+	Put         *PutPlan         `json:"put,omitempty"`
+	Task        *TaskPlan        `json:"task,omitempty"`
+	SetPipeline *SetPipelinePlan `json:"set_pipeline,omitempty"`
+
+	// used for 'fly execute'
+	ArtifactInput  *ArtifactInputPlan  `json:"artifact_input,omitempty"`
+	ArtifactOutput *ArtifactOutputPlan `json:"artifact_output,omitempty"`
+
 	Aggregate  *AggregatePlan  `json:"aggregate,omitempty"`
 	InParallel *InParallelPlan `json:"in_parallel,omitempty"`
 	Do         *DoPlan         `json:"do,omitempty"`
-	Get        *GetPlan        `json:"get,omitempty"`
-	Put        *PutPlan        `json:"put,omitempty"`
-	Task       *TaskPlan       `json:"task,omitempty"`
+	Try        *TryPlan        `json:"try,omitempty"`
+	Timeout    *TimeoutPlan    `json:"timeout,omitempty"`
+	Retry      *RetryPlan      `json:"retry,omitempty"`
 	OnAbort    *OnAbortPlan    `json:"on_abort,omitempty"`
 	OnError    *OnErrorPlan    `json:"on_error,omitempty"`
 	Ensure     *EnsurePlan     `json:"ensure,omitempty"`
 	OnSuccess  *OnSuccessPlan  `json:"on_success,omitempty"`
 	OnFailure  *OnFailurePlan  `json:"on_failure,omitempty"`
-	Try        *TryPlan        `json:"try,omitempty"`
-	Timeout    *TimeoutPlan    `json:"timeout,omitempty"`
-	Retry      *RetryPlan      `json:"retry,omitempty"`
-
-	// used for 'fly execute'
-	ArtifactInput  *ArtifactInputPlan  `json:"artifact_input,omitempty"`
-	ArtifactOutput *ArtifactOutputPlan `json:"artifact_output,omitempty"`
 
 	// deprecated, kept for backwards compatibility to be able to show old builds
 	DependentGet *DependentGetPlan `json:"dependent_get,omitempty"`
@@ -123,6 +125,11 @@ type TaskPlan struct {
 	ImageArtifactName string            `json:"image,omitempty"`
 
 	VersionedResourceTypes VersionedResourceTypes `json:"resource_types,omitempty"`
+}
+
+type SetPipelinePlan struct {
+	Name string `json:"name"`
+	File string `json:"file,omitempty"`
 }
 
 type RetryPlan []Plan

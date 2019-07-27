@@ -14,11 +14,11 @@ type JobConfig struct {
 
 	BuildLogRetention *BuildLogRetention `json:"build_log_retention,omitempty"`
 
-	Abort   *PlanConfig `json:"on_abort,omitempty"`
-	Error   *PlanConfig `json:"on_error,omitempty"`
-	Failure *PlanConfig `json:"on_failure,omitempty"`
-	Ensure  *PlanConfig `json:"ensure,omitempty"`
-	Success *PlanConfig `json:"on_success,omitempty"`
+	OnAbort   *PlanConfig `json:"on_abort,omitempty"`
+	OnError   *PlanConfig `json:"on_error,omitempty"`
+	OnFailure *PlanConfig `json:"on_failure,omitempty"`
+	OnSuccess *PlanConfig `json:"on_success,omitempty"`
+	Ensure    *PlanConfig `json:"ensure,omitempty"`
 
 	Plan PlanSequence `json:"plan"`
 }
@@ -30,11 +30,11 @@ type BuildLogRetention struct {
 
 func (config JobConfig) Hooks() Hooks {
 	return Hooks{
-		Abort:   config.Abort,
-		Error:   config.Error,
-		Failure: config.Failure,
+		Abort:   config.OnAbort,
+		Error:   config.OnError,
+		Failure: config.OnFailure,
+		Success: config.OnSuccess,
 		Ensure:  config.Ensure,
-		Success: config.Success,
 	}
 }
 
@@ -64,12 +64,12 @@ func (config JobConfig) GetSerialGroups() []string {
 
 func (config JobConfig) Plans() []PlanConfig {
 	plan := collectPlans(PlanConfig{
-		Do:      &config.Plan,
-		Abort:   config.Abort,
-		Error:   config.Error,
-		Ensure:  config.Ensure,
-		Failure: config.Failure,
-		Success: config.Success,
+		Do:        &config.Plan,
+		OnAbort:   config.OnAbort,
+		OnError:   config.OnError,
+		OnFailure: config.OnFailure,
+		OnSuccess: config.OnSuccess,
+		Ensure:    config.Ensure,
 	})
 
 	return plan
@@ -78,20 +78,20 @@ func (config JobConfig) Plans() []PlanConfig {
 func collectPlans(plan PlanConfig) []PlanConfig {
 	var plans []PlanConfig
 
-	if plan.Abort != nil {
-		plans = append(plans, collectPlans(*plan.Abort)...)
+	if plan.OnAbort != nil {
+		plans = append(plans, collectPlans(*plan.OnAbort)...)
 	}
 
-	if plan.Error != nil {
-		plans = append(plans, collectPlans(*plan.Error)...)
+	if plan.OnError != nil {
+		plans = append(plans, collectPlans(*plan.OnError)...)
 	}
 
-	if plan.Success != nil {
-		plans = append(plans, collectPlans(*plan.Success)...)
+	if plan.OnSuccess != nil {
+		plans = append(plans, collectPlans(*plan.OnSuccess)...)
 	}
 
-	if plan.Failure != nil {
-		plans = append(plans, collectPlans(*plan.Failure)...)
+	if plan.OnFailure != nil {
+		plans = append(plans, collectPlans(*plan.OnFailure)...)
 	}
 
 	if plan.Ensure != nil {

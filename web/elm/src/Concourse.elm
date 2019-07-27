@@ -333,10 +333,11 @@ type alias StepName =
 
 type BuildStep
     = BuildStepTask StepName
-    | BuildStepArtifactInput StepName
     | BuildStepGet StepName (Maybe Version)
-    | BuildStepArtifactOutput StepName
     | BuildStepPut StepName
+    | BuildStepSetPipeline StepName
+    | BuildStepArtifactInput StepName
+    | BuildStepArtifactOutput StepName
     | BuildStepAggregate (Array BuildPlan)
     | BuildStepInParallel (Array BuildPlan)
     | BuildStepDo (Array BuildPlan)
@@ -373,10 +374,12 @@ decodeBuildPlan_ =
                     lazy (\_ -> decodeBuildStepTask)
                 , Json.Decode.field "get" <|
                     lazy (\_ -> decodeBuildStepGet)
-                , Json.Decode.field "artifact_input" <|
-                    lazy (\_ -> decodeBuildStepArtifactInput)
                 , Json.Decode.field "put" <|
                     lazy (\_ -> decodeBuildStepPut)
+                , Json.Decode.field "set_pipeline" <|
+                    lazy (\_ -> decodeBuildStepSetPipeline)
+                , Json.Decode.field "artifact_input" <|
+                    lazy (\_ -> decodeBuildStepArtifactInput)
                 , Json.Decode.field "artifact_output" <|
                     lazy (\_ -> decodeBuildStepArtifactOutput)
                 , Json.Decode.field "dependent_get" <|
@@ -410,6 +413,12 @@ decodeBuildPlan_ =
 decodeBuildStepTask : Json.Decode.Decoder BuildStep
 decodeBuildStepTask =
     Json.Decode.succeed BuildStepTask
+        |> andMap (Json.Decode.field "name" Json.Decode.string)
+
+
+decodeBuildStepSetPipeline : Json.Decode.Decoder BuildStep
+decodeBuildStepSetPipeline =
+    Json.Decode.succeed BuildStepSetPipeline
         |> andMap (Json.Decode.field "name" Json.Decode.string)
 
 

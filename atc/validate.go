@@ -265,23 +265,23 @@ func validateJobs(c Config) ([]ConfigWarning, error) {
 		warnings = append(warnings, planWarnings...)
 		errorMessages = append(errorMessages, planErrMessages...)
 
-		if job.Abort != nil {
+		if job.OnAbort != nil {
 			subIdentifier := fmt.Sprintf("%s.abort", identifier)
-			planWarnings, planErrMessages := validatePlan(c, subIdentifier, *job.Abort)
+			planWarnings, planErrMessages := validatePlan(c, subIdentifier, *job.OnAbort)
 			warnings = append(warnings, planWarnings...)
 			errorMessages = append(errorMessages, planErrMessages...)
 		}
 
-		if job.Error != nil {
+		if job.OnError != nil {
 			subIdentifier := fmt.Sprintf("%s.error", identifier)
-			planWarnings, planErrMessages := validatePlan(c, subIdentifier, *job.Error)
+			planWarnings, planErrMessages := validatePlan(c, subIdentifier, *job.OnError)
 			warnings = append(warnings, planWarnings...)
 			errorMessages = append(errorMessages, planErrMessages...)
 		}
 
-		if job.Failure != nil {
+		if job.OnFailure != nil {
 			subIdentifier := fmt.Sprintf("%s.failure", identifier)
-			planWarnings, planErrMessages := validatePlan(c, subIdentifier, *job.Failure)
+			planWarnings, planErrMessages := validatePlan(c, subIdentifier, *job.OnFailure)
 			warnings = append(warnings, planWarnings...)
 			errorMessages = append(errorMessages, planErrMessages...)
 		}
@@ -293,9 +293,9 @@ func validateJobs(c Config) ([]ConfigWarning, error) {
 			errorMessages = append(errorMessages, planErrMessages...)
 		}
 
-		if job.Success != nil {
+		if job.OnSuccess != nil {
 			subIdentifier := fmt.Sprintf("%s.success", identifier)
-			planWarnings, planErrMessages := validatePlan(c, subIdentifier, *job.Success)
+			planWarnings, planErrMessages := validatePlan(c, subIdentifier, *job.OnSuccess)
 			warnings = append(warnings, planWarnings...)
 			errorMessages = append(errorMessages, planErrMessages...)
 		}
@@ -361,6 +361,10 @@ func validatePlan(c Config, identifier string, plan PlanConfig) ([]ConfigWarning
 
 	if plan.Task != "" {
 		foundTypes.Find("task")
+	}
+
+	if plan.SetPipeline != "" {
+		foundTypes.Find("set_pipeline")
 	}
 
 	if plan.Do != nil {
@@ -526,7 +530,7 @@ func validatePlan(c Config, identifier string, plan PlanConfig) ([]ConfigWarning
 	case plan.Task != "":
 		identifier = fmt.Sprintf("%s.task.%s", identifier, plan.Task)
 
-		if plan.TaskConfig == nil && plan.TaskConfigPath == "" {
+		if plan.TaskConfig == nil && plan.File == "" {
 			errorMessages = append(errorMessages, identifier+" does not specify any task configuration")
 		}
 
@@ -537,7 +541,7 @@ func validatePlan(c Config, identifier string, plan PlanConfig) ([]ConfigWarning
 			})
 		}
 
-		if plan.TaskConfig != nil && plan.TaskConfigPath != "" {
+		if plan.TaskConfig != nil && plan.File != "" {
 			errorMessages = append(errorMessages, identifier+" specifies both `file` and `config` in a task step")
 		}
 
@@ -562,16 +566,16 @@ func validatePlan(c Config, identifier string, plan PlanConfig) ([]ConfigWarning
 		errorMessages = append(errorMessages, planErrMessages...)
 	}
 
-	if plan.Abort != nil {
+	if plan.OnAbort != nil {
 		subIdentifier := fmt.Sprintf("%s.abort", identifier)
-		planWarnings, planErrMessages := validatePlan(c, subIdentifier, *plan.Abort)
+		planWarnings, planErrMessages := validatePlan(c, subIdentifier, *plan.OnAbort)
 		warnings = append(warnings, planWarnings...)
 		errorMessages = append(errorMessages, planErrMessages...)
 	}
 
-	if plan.Error != nil {
+	if plan.OnError != nil {
 		subIdentifier := fmt.Sprintf("%s.error", identifier)
-		planWarnings, planErrMessages := validatePlan(c, subIdentifier, *plan.Error)
+		planWarnings, planErrMessages := validatePlan(c, subIdentifier, *plan.OnError)
 		warnings = append(warnings, planWarnings...)
 		errorMessages = append(errorMessages, planErrMessages...)
 	}
@@ -583,16 +587,16 @@ func validatePlan(c Config, identifier string, plan PlanConfig) ([]ConfigWarning
 		errorMessages = append(errorMessages, planErrMessages...)
 	}
 
-	if plan.Success != nil {
+	if plan.OnSuccess != nil {
 		subIdentifier := fmt.Sprintf("%s.success", identifier)
-		planWarnings, planErrMessages := validatePlan(c, subIdentifier, *plan.Success)
+		planWarnings, planErrMessages := validatePlan(c, subIdentifier, *plan.OnSuccess)
 		warnings = append(warnings, planWarnings...)
 		errorMessages = append(errorMessages, planErrMessages...)
 	}
 
-	if plan.Failure != nil {
+	if plan.OnFailure != nil {
 		subIdentifier := fmt.Sprintf("%s.failure", identifier)
-		planWarnings, planErrMessages := validatePlan(c, subIdentifier, *plan.Failure)
+		planWarnings, planErrMessages := validatePlan(c, subIdentifier, *plan.OnFailure)
 		warnings = append(warnings, planWarnings...)
 		errorMessages = append(errorMessages, planErrMessages...)
 	}
@@ -640,7 +644,7 @@ func validateInapplicableFields(inapplicableFields []string, plan PlanConfig, id
 				foundInapplicableFields = append(foundInapplicableFields, field)
 			}
 		case "file":
-			if plan.TaskConfigPath != "" {
+			if plan.File != "" {
 				foundInapplicableFields = append(foundInapplicableFields, field)
 			}
 		}

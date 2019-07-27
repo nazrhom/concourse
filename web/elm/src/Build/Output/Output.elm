@@ -170,7 +170,7 @@ handleEvent event ( model, effects, outmsg ) =
             )
 
         FinishTask origin exitStatus time ->
-            ( updateStep origin.id (finishStep exitStatus (Just time)) model
+            ( updateStep origin.id (finishStep (exitStatus == 0) (Just time)) model
             , effects
             , outmsg
             )
@@ -188,7 +188,7 @@ handleEvent event ( model, effects, outmsg ) =
             )
 
         FinishGet origin exitStatus version metadata time ->
-            ( updateStep origin.id (finishStep exitStatus time << setResourceInfo version metadata) model
+            ( updateStep origin.id (finishStep (exitStatus == 0) time << setResourceInfo version metadata) model
             , effects
             , outmsg
             )
@@ -206,7 +206,25 @@ handleEvent event ( model, effects, outmsg ) =
             )
 
         FinishPut origin exitStatus version metadata time ->
-            ( updateStep origin.id (finishStep exitStatus time << setResourceInfo version metadata) model
+            ( updateStep origin.id (finishStep (exitStatus == 0) time << setResourceInfo version metadata) model
+            , effects
+            , outmsg
+            )
+
+        Initialize origin time ->
+            ( updateStep origin.id (setInitialize time) model
+            , effects
+            , outmsg
+            )
+
+        Start origin time ->
+            ( updateStep origin.id (setStart time) model
+            , effects
+            , outmsg
+            )
+
+        Finish origin time succeeded ->
+            ( updateStep origin.id (finishStep succeeded (Just time)) model
             , effects
             , outmsg
             )
@@ -295,11 +313,11 @@ setInitialize time tree =
     setStepInitialize time (setStepState StepStateRunning tree)
 
 
-finishStep : Int -> Maybe Time.Posix -> StepTree -> StepTree
-finishStep exitStatus mtime tree =
+finishStep : Bool -> Maybe Time.Posix -> StepTree -> StepTree
+finishStep succeeded mtime tree =
     let
         stepState =
-            if exitStatus == 0 then
+            if succeeded then
                 StepStateSucceeded
 
             else

@@ -36,11 +36,16 @@ func (e ErrResourceNotFound) Error() string {
 //go:generate counterfeiter . GetDelegate
 
 type GetDelegate interface {
-	BuildStepDelegate
+	ImageVersionDetermined(db.UsedResourceCache) error
+
+	Stdout() io.Writer
+	Stderr() io.Writer
 
 	Initializing(lager.Logger)
 	Starting(lager.Logger)
 	Finished(lager.Logger, ExitStatus, VersionInfo)
+	Errored(lager.Logger, string)
+
 	UpdateVersion(lager.Logger, atc.GetPlan, VersionInfo)
 }
 

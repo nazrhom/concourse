@@ -248,103 +248,84 @@ func (c *InParallelConfig) UnmarshalJSON(payload []byte) error {
 // A PlanConfig is a flattened set of configuration corresponding to
 // a particular Plan, where Source and Version are populated lazily.
 type PlanConfig struct {
-	// makes the Plan conditional
-	// conditions on which to perform a nested sequence
+	// core steps
+	Get         string `json:"get,omitempty"`
+	Put         string `json:"put,omitempty"`
+	Task        string `json:"task,omitempty"`
+	SetPipeline string `json:"set_pipeline,omitempty"`
 
-	// compose a nested sequence of plans
-	// name of the nested 'do'
-	RawName string `json:"name,omitempty"`
-
-	// a nested chain of steps to run
-	Do *PlanSequence `json:"do,omitempty"`
-
-	// corresponds to an Aggregate plan, keyed by the name of each sub-plan
-	Aggregate *PlanSequence `json:"aggregate,omitempty"`
-
-	// a nested chain of steps to run in parallel
+	// step aggregators
+	Do         *PlanSequence     `json:"do,omitempty"`
+	Aggregate  *PlanSequence     `json:"aggregate,omitempty"`
 	InParallel *InParallelConfig `json:"in_parallel,omitempty"`
 
-	// corresponds to Get and Put resource plans, respectively
-	// name of 'input', e.g. bosh-stemcell
-	Get string `json:"get,omitempty"`
-	// jobs that this resource must have made it through
+	// step hooks
+	OnAbort   *PlanConfig `json:"on_abort,omitempty"`
+	OnError   *PlanConfig `json:"on_error,omitempty"`
+	OnFailure *PlanConfig `json:"on_failure,omitempty"`
+	OnSuccess *PlanConfig `json:"on_success,omitempty"`
+	Ensure    *PlanConfig `json:"ensure,omitempty"`
+
+	// step modifiers
+	Try      *PlanConfig `json:"try,omitempty"`
+	Timeout  string      `json:"timeout,omitempty"`
+	Attempts int         `json:"attempts,omitempty"`
+
+	// step attributes
+
+	// with Get: jobs that this resource must have made it through
 	Passed []string `json:"passed,omitempty"`
-	// whether to trigger based on this resource changing
+
+	// with Get: whether to trigger based on this resource changing
 	Trigger bool `json:"trigger,omitempty"`
 
-	// name of 'output', e.g. rootfs-tarball
-	Put string `json:"put,omitempty"`
-
-	// corresponding resource config, e.g. aws-stemcell
+	// with Get/Put: fetch as the Get/Put name, using this resouce
 	Resource string `json:"resource,omitempty"`
 
-	// inputs to a put step either a list (e.g. [artifact-1, aritfact-2]) or all (e.g. all)
+	// with Get/Put: fetch the Get/Put resource, as this name
+	As string `json:"as,omitempty"`
+
+	// with Put: artifacts to provide to the put step
 	Inputs *InputsConfig `json:"inputs,omitempty"`
 
-	// corresponds to a Task plan
-	// name of 'task', e.g. unit, go1.3, go1.4
-	Task string `json:"task,omitempty"`
-	// run task privileged
+	// with Task: run the task privileged
 	Privileged bool `json:"privileged,omitempty"`
-	// task config path, e.g. foo/build.yml
-	TaskConfigPath string `json:"file,omitempty"`
-	// task variables, if task is specified as external file via TaskConfigPath
-	TaskVars Params `json:"vars,omitempty"`
-	// inlined task config
+
+	// with Task: path to a task config to execute
+	// with SetPipeline: path to a pipeline config to set
+	File string `json:"file,omitempty"`
+
+	// with Task/SetPipeline: vars to interpolate into the config file
+	Vars Params `json:"vars,omitempty"`
+
+	// with Task: inlined task config
 	TaskConfig *TaskConfig `json:"config,omitempty"`
 
-	// used by Get and Put for specifying params to the resource
-	// used by Task for passing params to external task config
+	// with Get/Put: specifying params to the resource
+	// with Task: passing params as env to task
 	Params Params `json:"params,omitempty"`
 
-	// used to pass specific inputs/outputs as generic inputs/outputs in task config
-	InputMapping  map[string]string `json:"input_mapping,omitempty"`
-	OutputMapping map[string]string `json:"output_mapping,omitempty"`
-
-	// used to specify an image artifact from a previous build to be used as the image for a subsequent task container
-	ImageArtifactName string `json:"image,omitempty"`
-
-	// used by Put to specify params for the subsequent Get
+	// with Put: specify params for the subsequent Get
 	GetParams Params `json:"get_params,omitempty"`
 
-	// used by any step to specify which workers are eligible to run the step
+	// with Task: map an artifact to a task's input
+	InputMapping map[string]string `json:"input_mapping,omitempty"`
+
+	// with Task: map a task's output to an artifact
+	OutputMapping map[string]string `json:"output_mapping,omitempty"`
+
+	// with Task: an artifact to use as the task's image; must have rootfs/ and metadata.json
+	ImageArtifactName string `json:"image,omitempty"`
+
+	// with Get/Put/Task: tags to require when selecting the worker for the step's container
 	Tags Tags `json:"tags,omitempty"`
 
-	// used by any step to run something when the build is aborted during execution of the step
-	Abort *PlanConfig `json:"on_abort,omitempty"`
-
-	// used by any step to run something when the build errors during execution of the step
-	Error *PlanConfig `json:"on_error,omitempty"`
-
-	// used by any step to run something when the step reports a failure
-	Failure *PlanConfig `json:"on_failure,omitempty"`
-
-	// used on any step to always execute regardless of the step's completed state
-	Ensure *PlanConfig `json:"ensure,omitempty"`
-
-	// used on any step to execute on successful completion of the step
-	Success *PlanConfig `json:"on_success,omitempty"`
-
-	// used on any step to swallow failures and errors
-	Try *PlanConfig `json:"try,omitempty"`
-
-	// used on any step to interrupt the step after a given duration
-	Timeout string `json:"timeout,omitempty"`
-
-	// not present in yaml
-	DependentGet string `json:"-" json:"-"`
-
-	// repeat the step up to N times, until it works
-	Attempts int `json:"attempts,omitempty"`
-
+	// with Get: either 'latest' (default), 'every' (to not skip available
+	// versions), or a specific version e.g. '{ref: abcdef}'
 	Version *VersionConfig `json:"version,omitempty"`
 }
 
 func (config PlanConfig) Name() string {
-	if config.RawName != "" {
-		return config.RawName
-	}
-
 	if config.Get != "" {
 		return config.Get
 	}
@@ -380,7 +361,13 @@ func (config PlanConfig) ResourceName() string {
 }
 
 func (config PlanConfig) Hooks() Hooks {
-	return Hooks{Abort: config.Abort, Error: config.Error, Failure: config.Failure, Ensure: config.Ensure, Success: config.Success}
+	return Hooks{
+		Abort:   config.OnAbort,
+		Error:   config.OnError,
+		Failure: config.OnFailure,
+		Success: config.OnSuccess,
+		Ensure:  config.Ensure,
+	}
 }
 
 type ResourceConfigs []ResourceConfig

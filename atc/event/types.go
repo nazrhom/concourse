@@ -38,4 +38,13 @@ const (
 
 	// error occurred
 	EventTypeError atc.EventType = "error"
+
+	// step initializing
+	EventTypeInitialize = "initialize"
+
+	// step starting
+	EventTypeStart = "start"
+
+	// step finished
+	EventTypeFinish = "finish"
 )

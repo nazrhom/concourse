@@ -234,8 +234,8 @@ func (factory *buildFactory) constructUnhookedPlan(
 			Name:              planConfig.Task,
 			Privileged:        planConfig.Privileged,
 			Config:            planConfig.TaskConfig,
-			ConfigPath:        planConfig.TaskConfigPath,
-			Vars:              planConfig.TaskVars,
+			ConfigPath:        planConfig.File,
+			Vars:              planConfig.Vars,
 			Tags:              planConfig.Tags,
 			Params:            planConfig.Params,
 			InputMapping:      planConfig.InputMapping,
@@ -244,6 +244,14 @@ func (factory *buildFactory) constructUnhookedPlan(
 
 			VersionedResourceTypes: resourceTypes,
 		})
+
+	case planConfig.SetPipeline != "":
+		// XXX: hard to know that i need to add this
+		plan = factory.planFactory.NewPlan(atc.SetPipelinePlan{
+			Name: planConfig.SetPipeline,
+			File: planConfig.File,
+		})
+
 	case planConfig.Try != nil:
 		nextStep, err := factory.constructPlanFromConfig(
 			*planConfig.Try,

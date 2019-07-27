@@ -4,9 +4,7 @@ import (
 	"context"
 	"io"
 
-	"code.cloudfoundry.org/lager"
 	"github.com/concourse/concourse/atc"
-	"github.com/concourse/concourse/atc/db"
 	"github.com/concourse/concourse/atc/exec/artifact"
 )
 
@@ -29,17 +27,6 @@ type Step interface {
 	// Succeeded is true when the Step succeeded, and false otherwise.
 	// Succeeded is not guaranteed to be truthful until after you run Run()
 	Succeeded() bool
-}
-
-//go:generate counterfeiter . BuildStepDelegate
-
-type BuildStepDelegate interface {
-	ImageVersionDetermined(db.UsedResourceCache) error
-
-	Stdout() io.Writer
-	Stderr() io.Writer
-
-	Errored(lager.Logger, string)
 }
 
 //go:generate counterfeiter . RunState

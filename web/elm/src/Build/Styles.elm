@@ -164,6 +164,9 @@ stepHeaderIcon icon =
 
                 StepHeaderTask ->
                     "terminal"
+
+                StepHeaderSetPipeline ->
+                    "breadcrumb-pipeline"
     in
     [ style "height" "28px"
     , style "width" "28px"

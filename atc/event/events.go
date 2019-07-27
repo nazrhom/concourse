@@ -164,3 +164,28 @@ type FinishPut struct {
 
 func (FinishPut) EventType() atc.EventType  { return EventTypeFinishPut }
 func (FinishPut) Version() atc.EventVersion { return "5.1" }
+
+type Initialize struct {
+	Origin Origin `json:"origin"`
+	Time   int64  `json:"time,omitempty"`
+}
+
+func (Initialize) EventType() atc.EventType  { return EventTypeInitialize }
+func (Initialize) Version() atc.EventVersion { return "1.0" }
+
+type Start struct {
+	Origin Origin `json:"origin"`
+	Time   int64  `json:"time,omitempty"`
+}
+
+func (Start) EventType() atc.EventType  { return EventTypeStart }
+func (Start) Version() atc.EventVersion { return "1.0" }
+
+type Finish struct {
+	Origin    Origin `json:"origin"`
+	Time      int64  `json:"time"`
+	Succeeded bool   `json:"succeeded"`
+}
+
+func (Finish) EventType() atc.EventType  { return EventTypeFinish }
+func (Finish) Version() atc.EventVersion { return "1.0" }

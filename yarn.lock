@@ -739,7 +739,7 @@ elm-analyse@^0.16.2:
     sums "0.2.4"
     ws "3.3.1"
 
-elm-format@0.8.1:
+elm-format@^0.8.1:
   version "0.8.1"
   resolved "https://registry.yarnpkg.com/elm-format/-/elm-format-0.8.1.tgz#37796fc06b8460a6d76a054a1216d86d8481155e"
   integrity sha512-uLcDICdmEoRBaCp3PobcvHtUej2RJFHRYfMd7i3CSH+RsajJYTdiPkviKIq823Kd4gfjQMpNajEyM1lLFez7+A==
